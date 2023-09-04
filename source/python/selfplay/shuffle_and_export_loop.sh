@@ -25,7 +25,7 @@ shift
 USEGATING="$1"
 shift
 
-GITROOTDIR="${SOURCE_FOLDER}"
+GITROOTDIR="$(git rev-parse --show-toplevel)"
 
 basedir="$(realpath "$BASEDIRRAW")"
 tmpdir="$(realpath "$TMPDIRRAW")"
