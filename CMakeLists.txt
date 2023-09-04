@@ -13,3 +13,4 @@ add_compile_options(-Wall -Wcast-qual -pedantic -Wextra -Wshadow -m64 -DUSE_PTHR
 add_link_options(-m64 -Wl,--no-as-needed)
 endif()
 add_subdirectory(source)
+file(COPY ${PROJECT_SOURCE_DIR}/data DESTINATION ${PROJECT_BINARY_DIR})

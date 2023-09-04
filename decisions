@@ -1,9 +1,0 @@
-Kill Board::PASS_LOC
-Originally the policy net ouputs some prob for that move too -> polcy output needs to be changed. (I tried to kill it so that I still have a chance to use the gui.)
-
-hist.setAssumeMultipleStartingBlackMovesAreHandicap(assumeMultipleStartingBlackMovesAreHandicap);
-I dont know what is this but I deleted it.
-
-baseHist.endGameIfAllPassAlive(baseBoard); 
-I deleted this endGameIfAllPassAlive I think it is very close to the littlegolem rule, I might want to restore it.
-
