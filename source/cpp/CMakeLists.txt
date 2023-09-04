@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.10.2)
 project(katago)
 
 set(CMAKE_CXX_STANDARD 14)
-message("HAHO!!!!!!!!!!!!!!!!!!")
 
 include_directories(external)
 include_directories(external/tclap-1.2.2/include)
