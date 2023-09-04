@@ -33,7 +33,7 @@ shift
 
 BASEDIR="$(realpath "$BASEDIRRAW")"
 
-GITROOTDIR="$(git rev-parse --show-toplevel)"
+GITROOTDIR="${SOURCE_FOLDER}"
 
 LOGSDIR="$BASEDIR"/logs
 SCRATCHDIR="$BASEDIR"/shufflescratch
@@ -45,12 +45,12 @@ mkdir -p "$BASEDIR"/gatekeepersgf
 
 # NOTE: You probably want to edit settings in the cpp/configs/selfplay1.cfg - what board sizes and rules, you want to learn, number of visits to use, etc.
 # NOTE: You may want to adjust these numbers.
-NUM_GAMES_PER_CYCLE=400
+NUM_GAMES_PER_CYCLE=40
 NUM_THREADS_FOR_SHUFFLING=4
-NUM_TRAIN_SAMPLES_PER_CYCLE=500000
+NUM_TRAIN_SAMPLES_PER_CYCLE=50000
 BATCHSIZE=128 # KataGo normally uses batch size 256, and you can do that too, but for lower-end GPUs 64 or 128 may be needed to avoid running out of memory.
-SHUFFLE_MINROWS=500
-SHUFFLE_KEEPROWS=600000 # A little larger than NUM_TRAIN_SAMPLES_PER_CYCLE
+SHUFFLE_MINROWS=50
+SHUFFLE_KEEPROWS=60000 # A little larger than NUM_TRAIN_SAMPLES_PER_CYCLE
 
 # For archival and logging purposes - you can look back and see exactly the python code on a particular date
 DATE_FOR_FILENAME=$(date "+%Y%m%d-%H%M%S")

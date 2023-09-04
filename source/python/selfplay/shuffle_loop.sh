@@ -19,7 +19,7 @@ shift
 BATCHSIZE="$1"
 shift
 
-GITROOTDIR="$(git rev-parse --show-toplevel)"
+GITROOTDIR="${SOURCE_FOLDER}"
 
 basedir="$(realpath "$BASEDIRRAW")"
 tmpdir="$(realpath "$TMPDIRRAW")"

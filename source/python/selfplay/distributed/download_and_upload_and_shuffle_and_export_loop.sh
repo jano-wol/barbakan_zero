@@ -33,7 +33,7 @@ shift
 #and using gating disables the export script from making extraneous selfplay data dirs.
 USEGATING=1
 
-GITROOTDIR="$(git rev-parse --show-toplevel)"
+GITROOTDIR="${SOURCE_FOLDER}"
 
 basedir="$(realpath "$BASEDIRRAW")"
 tmpdir="$(realpath "$TMPDIRRAW")"

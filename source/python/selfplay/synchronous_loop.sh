@@ -33,7 +33,7 @@ shift
 
 BASEDIR="$(realpath "$BASEDIRRAW")"
 
-GITROOTDIR="$(git rev-parse --show-toplevel)"
+GITROOTDIR="${SOURCE_FOLDER}"
 
 LOGSDIR="$BASEDIR"/logs
 SCRATCHDIR="$BASEDIR"/shufflescratch

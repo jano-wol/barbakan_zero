@@ -28,7 +28,7 @@ shift
 EXPORTMODE="$1"
 shift
 
-GITROOTDIR="$(git rev-parse --show-toplevel)"
+GITROOTDIR="${SOURCE_FOLDER}"
 
 #------------------------------------------------------------------------------
 set -x
