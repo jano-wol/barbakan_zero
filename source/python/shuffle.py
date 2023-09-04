@@ -15,7 +15,7 @@ import multiprocessing
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.python_io import TFRecordOptions,TFRecordCompressionType,TFRecordWriter
+from tensorflow.io import TFRecordOptions,TFRecordWriter
 
 import tfrecordio
 
@@ -127,7 +127,7 @@ def shardify(input_idx, input_file_group, num_out_files, out_tmp_dirs, keep_prob
 def merge_shards(filename, num_shards_to_merge, out_tmp_dir, batch_size, ensure_batch_multiple):
   np.random.seed([int.from_bytes(os.urandom(4), byteorder='little') for i in range(5)])
 
-  tfoptions = TFRecordOptions(TFRecordCompressionType.ZLIB)
+  tfoptions = TFRecordOptions(compression_type = 'ZLIB')
   record_writer = TFRecordWriter(filename,tfoptions)
 
   binaryInputNCHWPackeds = []

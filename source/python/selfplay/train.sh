@@ -7,7 +7,7 @@ set -o pipefail
 #Or, to tfsavedmodels_toexport_extra/ (EXPORTMODE == "extra").
 #Or just trains without exporting (EXPORTMODE == "trainonly").
 
-if [[ $# -lt 5 ]]
+if [[ $# -lt 6 ]]
 then
     echo "Usage: $0 BASEDIR TRAININGNAME MODELKIND BATCHSIZE EXPORTMODE OTHERARGS"
     echo "BASEDIR containing selfplay data and models and related directories"
@@ -15,8 +15,10 @@ then
     echo "MODELKIND what size model to train, like b10c128, see ../modelconfigs.py"
     echo "BATCHSIZE number of samples to concat together per batch for training, must match shuffle"
     echo "EXPORTMODE 'main': train and export for selfplay. 'extra': train and export extra non-selfplay model. 'trainonly': train without export"
+    echo "GITROOTDIR is the folder of source files"
     exit 0
 fi
+set -x
 BASEDIR="$1"
 shift
 TRAININGNAME="$1"
@@ -27,11 +29,10 @@ BATCHSIZE="$1"
 shift
 EXPORTMODE="$1"
 shift
-
-GITROOTDIR="${SOURCE_FOLDER}"
+GITROOTDIR="$1"
+shift
 
 #------------------------------------------------------------------------------
-set -x
 
 mkdir -p "$BASEDIR"/train/"$TRAININGNAME"
 git show --no-patch --no-color > "$BASEDIR"/train/"$TRAININGNAME"/version.txt
