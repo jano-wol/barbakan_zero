@@ -97,6 +97,9 @@ NNEvaluator::NNEvaluator(
    loadedModel(NULL),
    nnCacheTable(NULL),
    logger(lg),
+   modelVersion(-1),
+   inputsVersion(-1),
+   postProcessParams(),
    numServerThreadsEverSpawned(0),
    serverThreads(),
    maxNumRows(maxBatchSize),
@@ -147,6 +150,7 @@ NNEvaluator::NNEvaluator(
     loadedModel = NeuralNet::loadModelFile(modelFileName,expectedSha256);
     modelVersion = NeuralNet::getModelVersion(loadedModel);
     inputsVersion = NNModelVersion::getInputsVersion(modelVersion);
+    postProcessParams = NeuralNet::getPostProcessParams(loadedModel);
     computeContext = NeuralNet::createComputeContext(
       gpuIdxs,logger,nnXLen,nnYLen,
       openCLTunerFile,homeDataDirOverride,openCLReTunePerBoardSize,
@@ -741,7 +745,7 @@ void NNEvaluator::evaluate(
       }
 
     }
-    else if(modelVersion >= 4 && modelVersion <= 10) {
+    else if(modelVersion >= 4 && modelVersion <= 14) {
       double winProb;
       double lossProb;
       double noResultProb;
@@ -779,7 +783,8 @@ void NNEvaluator::evaluate(
         double scoreStdev = 0;
         scoreMeanSq = 0;
         lead = 0;
-        varTimeLeft = softPlus(varTimeLeftPreSoftplus) * 40.0;
+        varTimeLeft = softPlus(varTimeLeftPreSoftplus) * postProcessParams.varianceTimeMultiplier;
+        assert(postProcessParams.varianceTimeMultiplier == 40.0);
 
         //scoreMean and scoreMeanSq are still conditional on having a result, we need to make them unconditional now
         //noResult counts as 0 score for scorevalue purposes.
@@ -787,9 +792,19 @@ void NNEvaluator::evaluate(
         scoreMeanSq = scoreMeanSq * (1.0-noResultProb);
         lead = lead * (1.0-noResultProb);
 
-        if(modelVersion >= 10) {
-          shorttermWinlossError = sqrt(softPlus(shorttermWinlossErrorPreSoftplus) * 0.25);
-          shorttermScoreError = sqrt(softPlus(shorttermScoreErrorPreSoftplus) * 30.0);
+        if (modelVersion >= 14) {
+          {
+            double s = softPlus(shorttermWinlossErrorPreSoftplus * 0.5);
+            shorttermWinlossError = sqrt(s * s * postProcessParams.shorttermValueErrorMultiplier);
+          }
+          {
+            double s = softPlus(shorttermScoreErrorPreSoftplus * 0.5);
+            shorttermScoreError = sqrt(s * s * postProcessParams.shorttermScoreErrorMultiplier);
+          }
+        }
+        else if(modelVersion >= 10) {
+          shorttermWinlossError = sqrt(softPlus(shorttermWinlossErrorPreSoftplus) * postProcessParams.shorttermValueErrorMultiplier);
+          shorttermScoreError = sqrt(softPlus(shorttermScoreErrorPreSoftplus) * postProcessParams.shorttermScoreErrorMultiplier);
         }
         else {
           shorttermWinlossError = softPlus(shorttermWinlossErrorPreSoftplus);

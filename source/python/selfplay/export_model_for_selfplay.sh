@@ -1,4 +1,5 @@
 #!/bin/bash -eu
+set -ex
 set -o pipefail
 {
 #Takes any models in torchmodels_toexport/ and outputs a cuda-runnable model file to modelstobetested/
