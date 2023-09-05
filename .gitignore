@@ -1,12 +1,23 @@
-*.[oa]
-*.exe
-*~
-__pycache__
-*.h5
-*.log
-*.cbp
+# Files from build
+**/*.o
+**/*.s
+**/*.log
+**/*.out
+**/.depend
+**/.vscode
+**/.idea
+**/__pycache__
 
-tmp*.txt
+# Neural network for the NNUE evaluation
+**/*.nnue
+**/venv
+
+# Training data
+**/*.bin
+**/*.binpack
+
+# Build folder
+/build/
 
 cpp/write
 cpp/runtests
@@ -29,7 +40,6 @@ cpp/runwrite.sh
 
 cpp/program/gitinfo.h
 
-data/
 versions/
 cpp/build
 
