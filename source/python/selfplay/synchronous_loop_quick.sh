@@ -89,10 +89,20 @@ cd "$DATED_ARCHIVE"
 
 # Begin cycling forever, running each step in order.
 set -x
+COUNTER=0
 while true
 do
     echo "Gatekeeper"
     time ./barbakan_zero gatekeeper -rejected-models-dir "$BASEDIR"/rejectedmodels -accepted-models-dir "$BASEDIR"/models/ -sgf-output-dir "$BASEDIR"/gatekeepersgf/ -test-models-dir "$BASEDIR"/modelstobetested/ -config "$DATED_ARCHIVE"/gatekeeper.cfg -quit-if-no-nets-to-test | tee -a "$BASEDIR"/gatekeepersgf/stdout.txt
+    if [ -z "$(ls -A "$SELFPLAY_FOLDER/models")" ]; then
+        if (( $COUNTER > 2 )); then
+            echo "Could not create model in $SELFPLAY_FOLDER/models"
+            exit 1
+        fi
+    else
+        echo "Model generated."
+        break
+    fi
 
     echo "Selfplay"
     time ./barbakan_zero selfplay -max-games-total "$NUM_GAMES_PER_CYCLE" -output-dir "$BASEDIR"/selfplay -models-dir "$BASEDIR"/models -config "$DATED_ARCHIVE"/selfplay.cfg | tee -a "$BASEDIR"/selfplay/stdout.txt
@@ -111,8 +121,6 @@ do
     (
         time ./export_model_for_selfplay.sh "$NAMEPREFIX" "$BASEDIR" "$USEGATING" | tee -a "$BASEDIR"/logs/outexport.txt
     )
-
+    COUNTER=$[$COUNTER +1]
 done
-
-exit 0
 }
