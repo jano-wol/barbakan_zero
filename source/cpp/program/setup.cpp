@@ -432,6 +432,7 @@ vector<SearchParams> Setup::loadParams(
     if(cfg.contains("fpuParentWeight"+idxStr)) params.fpuParentWeight = cfg.getDouble("fpuParentWeight"+idxStr,        0.0, 1.0);
     else if(cfg.contains("fpuParentWeight"))   params.fpuParentWeight = cfg.getDouble("fpuParentWeight",        0.0, 1.0);
     else                                       params.fpuParentWeight = 0.0;
+    params.policyOptimism = 0.0;
     if(cfg.contains("parentValueWeightFactor"+idxStr)) params.parentValueWeightFactor = cfg.getDouble("parentValueWeightFactor"+idxStr, 0.00001, 1.0);
     else if(cfg.contains("parentValueWeightFactor")) params.parentValueWeightFactor = cfg.getDouble("parentValueWeightFactor", 0.00001, 1.0);
     else params.parentValueWeightFactor = 1.0;
@@ -467,7 +468,7 @@ vector<SearchParams> Setup::loadParams(
     if(cfg.contains("rootNumSymmetriesToSample"+idxStr)) params.rootNumSymmetriesToSample = cfg.getInt("rootNumSymmetriesToSample"+idxStr, 1, NNInputs::NUM_SYMMETRY_COMBINATIONS);
     else if(cfg.contains("rootNumSymmetriesToSample"))   params.rootNumSymmetriesToSample = cfg.getInt("rootNumSymmetriesToSample",        1, NNInputs::NUM_SYMMETRY_COMBINATIONS);
     else                                                 params.rootNumSymmetriesToSample = 1;
-
+    params.rootPolicyOptimism = params.policyOptimism;
     if(cfg.contains("rootDesiredPerChildVisitsCoeff"+idxStr)) params.rootDesiredPerChildVisitsCoeff = cfg.getDouble("rootDesiredPerChildVisitsCoeff"+idxStr, 0.0, 100.0);
     else if(cfg.contains("rootDesiredPerChildVisitsCoeff"))   params.rootDesiredPerChildVisitsCoeff = cfg.getDouble("rootDesiredPerChildVisitsCoeff",        0.0, 100.0);
     else                                                      params.rootDesiredPerChildVisitsCoeff = 0.0;

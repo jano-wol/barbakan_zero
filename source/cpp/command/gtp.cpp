@@ -508,6 +508,12 @@ struct GTPEngine {
     bot->setParams(params);
     bot->clearSearch();
   }
+  void setPolicyOptimism(double x) {
+    params.policyOptimism = x;
+    params.rootPolicyOptimism = x;
+    bot->setParams(params);
+    bot->clearSearch();
+  }
 
   void updateDynamicPDA() {
     updateDynamicPDAHelper(
@@ -1100,7 +1106,7 @@ struct GTPEngine {
     return isAlive;
   }
 
-  string rawNN(int whichSymmetry) {
+  string rawNN(int whichSymmetry, double policyOptimism) {
     if(nnEval == NULL)
       return "";
     ostringstream out;
@@ -1116,6 +1122,7 @@ struct GTPEngine {
           (params.playoutDoublingAdvantagePla == C_EMPTY || params.playoutDoublingAdvantagePla == nextPla) ?
           staticPlayoutDoublingAdvantage : -staticPlayoutDoublingAdvantage;
         nnInputParams.symmetry = symmetry;
+        nnInputParams.policyOptimism = policyOptimism;
         NNResultBuf buf;
         bool skipCache = true;
         bool includeOwnerMap = true;
@@ -1841,6 +1848,14 @@ int MainCmds::gtp(int argc, const char* const* argv) {
             response = "Invalid value for " + pieces[0] + ", must be float from 0.0 to 2.0";
           }
         }
+        else if(pieces[0] == "policyOptimism") {
+          if(Global::tryStringToDouble(pieces[1],d) && d >= 0 && d <= 1)
+            engine->setPolicyOptimism(d);
+          else {
+            responseIsError = true;
+            response = "Invalid value for " + pieces[0] + ", must be integer from 1 to 1024";
+          }
+        }
         else {
           responseIsError = true;
           response = "Unknown or invalid parameter: " + pieces[0];
@@ -2502,7 +2517,7 @@ int MainCmds::gtp(int argc, const char* const* argv) {
     else if(command == "kata-raw-nn") {
       int whichSymmetry = NNInputs::SYMMETRY_ALL;
       bool parsed = false;
-      if(pieces.size() == 1) {
+      if(pieces.size() == 1 || pieces.size() == 2) {
         string s = Global::trim(Global::toLower(pieces[0]));
         if(s == "all")
           parsed = true;
@@ -2515,7 +2530,7 @@ int MainCmds::gtp(int argc, const char* const* argv) {
         response = "Expected one argument 'all' or symmetry index [0-7] for kata-raw-nn but got '" + Global::concat(pieces," ") + "'";
       }
       else {
-        response = engine->rawNN(whichSymmetry);
+        response = engine->rawNN(whichSymmetry, 0);
       }
     }
 

@@ -321,6 +321,11 @@ Hash128 NNInputs::getHash(
     ASSERT_UNREACHABLE;
   }
 
+  //Fold in policy optimism
+  if(nnInputParams.policyOptimism > 0) {
+    ASSERT_UNREACHABLE;
+  }
+
   return hash;
 }
 

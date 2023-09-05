@@ -21,6 +21,7 @@ struct SearchParams {
   double fpuReductionMax;   //Max amount to reduce fpu value for unexplore children
   double fpuLossProp; //Scale fpu this proportion of the way towards assuming a move is a loss.
   double fpuParentWeight; //For fpu, 0 = use parent average, 1 = use parent nn value, interpolates between.
+  double policyOptimism; //Interpolate geometrically between raw policy and optimistic policy
   double parentValueWeightFactor; //Scale the parent weight by this much relative to children in mcts
   double valueWeightExponent; //Amount to apply a downweighting of children with very bad values relative to good ones
 
@@ -37,7 +38,7 @@ struct SearchParams {
 
   //We use the min of these two together, and also excess visits get pruned if the value turns out bad.
   double rootDesiredPerChildVisitsCoeff; //Funnel sqrt(this * policy prob * total visits) down any given child that receives any visits at all at the root
-
+  double rootPolicyOptimism; //Interpolate geometrically between raw policy and optimistic policy
   //Parameters for choosing the move to play
   double chosenMoveTemperature; //Make move roughly proportional to visit count ** (1/chosenMoveTemperature)
   double chosenMoveTemperatureEarly; //Temperature at start of game

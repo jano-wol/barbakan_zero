@@ -908,6 +908,7 @@ void Search::computeRootNNEvaluation(NNResultBuf& nnResultBuf, bool includeOwner
   nnInputParams.conservativePass = searchParams.conservativePass;
   nnInputParams.nnPolicyTemperature = searchParams.nnPolicyTemperature;
   nnInputParams.avoidMYTDaggerHack = searchParams.avoidMYTDaggerHackPla == pla;
+  nnInputParams.policyOptimism = searchParams.rootPolicyOptimism;
 
   nnEvaluator->evaluate(
     board, hist, pla,
@@ -1781,6 +1782,7 @@ void Search::initNodeNNOutput(
   nnInputParams.conservativePass = searchParams.conservativePass;
   nnInputParams.nnPolicyTemperature = searchParams.nnPolicyTemperature;
   nnInputParams.avoidMYTDaggerHack = searchParams.avoidMYTDaggerHackPla == thread.pla;
+  nnInputParams.policyOptimism = isRoot ? searchParams.rootPolicyOptimism : searchParams.policyOptimism;
 
   Hash128 nnHash;
   if (nnEvaluator->isInCacheTable(thread.board, thread.history, thread.pla,

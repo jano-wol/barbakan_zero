@@ -19,7 +19,8 @@ NNResultBuf::NNResultBuf()
     result(nullptr),
     errorLogLockout(false),
     // If no symmetry is specified, it will use default or random based on config.
-    symmetry(NNInputs::SYMMETRY_NOTSPECIFIED)
+    symmetry(NNInputs::SYMMETRY_NOTSPECIFIED),
+    policyOptimism(0.0)
 {}
 
 NNResultBuf::~NNResultBuf() {
@@ -565,6 +566,7 @@ void NNEvaluator::evaluate(
   }
 
   buf.symmetry = nnInputParams.symmetry;
+  buf.policyOptimism = nnInputParams.policyOptimism;
 
   unique_lock<std::mutex> lock(bufferMutex);
 

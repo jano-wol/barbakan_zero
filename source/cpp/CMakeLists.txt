@@ -206,6 +206,7 @@ add_executable(barbakan_zero
   core/datetime.cpp
   core/elo.cpp
   core/fancymath.cpp
+  core/fileutils.cpp
   core/hash.cpp
   core/logger.cpp
   core/makedir.cpp
@@ -215,6 +216,7 @@ add_executable(barbakan_zero
   core/rand_helpers.cpp
   core/sha2.cpp
   core/test.cpp
+  core/threadsafecounter.cpp
   core/threadsafequeue.cpp
   core/timer.cpp
   game/board.cpp
