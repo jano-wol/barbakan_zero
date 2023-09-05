@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "../game/rules.h"
+#include "../neuralnet/activations.h"
 
 struct ConvLayerDesc {
   std::string name;
@@ -54,9 +55,10 @@ struct BatchNormLayerDesc {
 
 struct ActivationLayerDesc {
   std::string name;
+  int activation;
 
   ActivationLayerDesc();
-  ActivationLayerDesc(std::istream& in);
+  ActivationLayerDesc(std::istream& in, int version);
   ActivationLayerDesc(ActivationLayerDesc&& other);
 
   ActivationLayerDesc(const ActivationLayerDesc&) = delete;
@@ -106,35 +108,13 @@ struct ResidualBlockDesc {
   ConvLayerDesc finalConv;
 
   ResidualBlockDesc();
-  ResidualBlockDesc(std::istream& in, bool binaryFloats);
+  ResidualBlockDesc(std::istream& in, int version, bool binaryFloats);
   ResidualBlockDesc(ResidualBlockDesc&& other);
 
   ResidualBlockDesc(const ResidualBlockDesc&) = delete;
   ResidualBlockDesc& operator=(const ResidualBlockDesc&) = delete;
 
   ResidualBlockDesc& operator=(ResidualBlockDesc&& other);
-
-  void iterConvLayers(std::function<void(const ConvLayerDesc& dest)> f) const;
-};
-
-struct DilatedResidualBlockDesc {
-  std::string name;
-  BatchNormLayerDesc preBN;
-  ActivationLayerDesc preActivation;
-  ConvLayerDesc regularConv;
-  ConvLayerDesc dilatedConv;
-  BatchNormLayerDesc midBN;
-  ActivationLayerDesc midActivation;
-  ConvLayerDesc finalConv;
-
-  DilatedResidualBlockDesc();
-  DilatedResidualBlockDesc(std::istream& in, bool binaryFloats);
-  DilatedResidualBlockDesc(DilatedResidualBlockDesc&& other);
-
-  DilatedResidualBlockDesc(const DilatedResidualBlockDesc&) = delete;
-  DilatedResidualBlockDesc& operator=(const DilatedResidualBlockDesc&) = delete;
-
-  DilatedResidualBlockDesc& operator=(DilatedResidualBlockDesc&& other);
 
   void iterConvLayers(std::function<void(const ConvLayerDesc& dest)> f) const;
 };
@@ -154,7 +134,7 @@ struct GlobalPoolingResidualBlockDesc {
   ConvLayerDesc finalConv;
 
   GlobalPoolingResidualBlockDesc();
-  GlobalPoolingResidualBlockDesc(std::istream& in, int vrsn, bool binaryFloats);
+  GlobalPoolingResidualBlockDesc(std::istream& in, int version, bool binaryFloats);
   GlobalPoolingResidualBlockDesc(GlobalPoolingResidualBlockDesc&& other);
 
   GlobalPoolingResidualBlockDesc(const GlobalPoolingResidualBlockDesc&) = delete;
@@ -165,9 +145,35 @@ struct GlobalPoolingResidualBlockDesc {
   void iterConvLayers(std::function<void(const ConvLayerDesc& dest)> f) const;
 };
 
+struct NestedBottleneckResidualBlockDesc {
+  std::string name;
+  int numBlocks;
+
+  BatchNormLayerDesc preBN;
+  ActivationLayerDesc preActivation;
+  ConvLayerDesc preConv;
+
+  std::vector<std::pair<int, unique_ptr_void>> blocks;
+
+  BatchNormLayerDesc postBN;
+  ActivationLayerDesc postActivation;
+  ConvLayerDesc postConv;
+
+  NestedBottleneckResidualBlockDesc();
+  NestedBottleneckResidualBlockDesc(std::istream& in, int version, bool binaryFloats);
+  NestedBottleneckResidualBlockDesc(NestedBottleneckResidualBlockDesc&& other);
+
+  NestedBottleneckResidualBlockDesc(const NestedBottleneckResidualBlockDesc&) = delete;
+  NestedBottleneckResidualBlockDesc& operator=(const NestedBottleneckResidualBlockDesc&) = delete;
+
+  NestedBottleneckResidualBlockDesc& operator=(NestedBottleneckResidualBlockDesc&& other);
+
+  void iterConvLayers(std::function<void(const ConvLayerDesc& dest)> f) const;
+};
+
 constexpr int ORDINARY_BLOCK_KIND = 0;
-constexpr int DILATED_BLOCK_KIND = 1;
 constexpr int GLOBAL_POOLING_BLOCK_KIND = 2;
+constexpr int NESTED_BOTTLENECK_BLOCK_KIND = 3;
 
 struct TrunkDesc {
   std::string name;
@@ -175,8 +181,7 @@ struct TrunkDesc {
   int numBlocks;
   int trunkNumChannels;
   int midNumChannels;      // Currently every plain residual block must have the same number of mid conv channels
-  int regularNumChannels;  // Currently every dilated or gpool residual block must have the same number of regular conv hannels
-  int dilatedNumChannels;  // Currently every dilated residual block must have the same number of dilated conv channels
+  int regularNumChannels;  // Currently every gpool residual block must have the same number of regular conv hannels
   int gpoolNumChannels;    // Currently every gpooling residual block must have the same number of gpooling conv channels
   ConvLayerDesc initialConv;
   MatMulLayerDesc initialMatMul;
@@ -186,7 +191,7 @@ struct TrunkDesc {
 
   TrunkDesc();
   ~TrunkDesc();
-  TrunkDesc(std::istream& in, int vrsn, bool binaryFloats);
+  TrunkDesc(std::istream& in, int version, bool binaryFloats);
   TrunkDesc(TrunkDesc&& other);
 
   TrunkDesc(const TrunkDesc&) = delete;
@@ -212,7 +217,7 @@ struct PolicyHeadDesc {
 
   PolicyHeadDesc();
   ~PolicyHeadDesc();
-  PolicyHeadDesc(std::istream& in, int vrsn, bool binaryFloats);
+  PolicyHeadDesc(std::istream& in, int version, bool binaryFloats);
   PolicyHeadDesc(PolicyHeadDesc&& other);
 
   PolicyHeadDesc(const PolicyHeadDesc&) = delete;
@@ -240,7 +245,7 @@ struct ValueHeadDesc {
 
   ValueHeadDesc();
   ~ValueHeadDesc();
-  ValueHeadDesc(std::istream& in, int vrsn, bool binaryFloats);
+  ValueHeadDesc(std::istream& in, int version, bool binaryFloats);
   ValueHeadDesc(ValueHeadDesc&& other);
 
   ValueHeadDesc(const ValueHeadDesc&) = delete;
@@ -251,8 +256,22 @@ struct ValueHeadDesc {
   void iterConvLayers(std::function<void(const ConvLayerDesc& dest)> f) const;
 };
 
+struct ModelPostProcessParams {
+  double tdScoreMultiplier;
+  double scoreMeanMultiplier;
+  double scoreStdevMultiplier;
+  double leadMultiplier;
+  double varianceTimeMultiplier;
+  double shorttermValueErrorMultiplier;
+  double shorttermScoreErrorMultiplier;
+
+  ModelPostProcessParams();
+  ~ModelPostProcessParams();
+};
+
 struct ModelDesc {
   std::string name;
+  std::string sha256;
   int version;
   int numInputChannels;
   int numInputGlobalChannels;
@@ -260,13 +279,15 @@ struct ModelDesc {
   int numScoreValueChannels;
   int numOwnershipChannels;
 
+  ModelPostProcessParams postProcessParams;
+
   TrunkDesc trunk;
   PolicyHeadDesc policyHead;
   ValueHeadDesc valueHead;
 
   ModelDesc();
   ~ModelDesc();
-  ModelDesc(std::istream& in, bool binaryFloats);
+  ModelDesc(std::istream& in, const std::string& sha256, bool binaryFloats);
   ModelDesc(ModelDesc&& other);
 
   ModelDesc(const ModelDesc&) = delete;

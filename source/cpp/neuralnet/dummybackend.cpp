@@ -44,6 +44,7 @@ void NeuralNet::freeComputeContext(ComputeContext* computeContext) {
 
 LoadedModel* NeuralNet::loadModelFile(const string& file, const string& expectedSha256) {
   (void)file;
+  (void)expectedSha256;
   throw StringError("Dummy neural net backend: NeuralNet::loadModelFile unimplemented");
 }
 
@@ -67,6 +68,11 @@ Rules NeuralNet::getSupportedRules(const LoadedModel* loadedModel, const Rules& 
   (void)desiredRules;
   (void)supported;
   throw StringError("Dummy neural net backend: NeuralNet::getSupportedRules unimplemented");
+}
+
+ModelPostProcessParams NeuralNet::getPostProcessParams(const LoadedModel* loadedModel) {
+  (void)loadedModel;
+  return ModelPostProcessParams();
 }
 
 ComputeHandle* NeuralNet::createComputeHandle(
@@ -93,6 +99,11 @@ ComputeHandle* NeuralNet::createComputeHandle(
 void NeuralNet::freeComputeHandle(ComputeHandle* gpuHandle) {
   if(gpuHandle != NULL)
     throw StringError("Dummy neural net backend: NeuralNet::freeLocalGpuHandle unimplemented");
+}
+
+bool NeuralNet::isUsingFP16(const ComputeHandle* handle) {
+  (void)handle;
+  return false;
 }
 
 void NeuralNet::printDevices() {

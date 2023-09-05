@@ -10,6 +10,8 @@ cmake
 ninja  
 python3.10-venv (python version is most likely flexible)  
 cuda toolkit (https://developer.nvidia.com/cuda-toolkit)  
+TCMalloc (sudo apt-get install google-perftools && sudo apt -y install libgoogle-perftools-dev)  
+zlib (sudo apt-get install zlib1g-dev && sudo apt-get install libzip-dev)
 
 To check that you have a working repo for development run the followings from the root of the repo:  
 ./source/scripts/configure.sh release  
