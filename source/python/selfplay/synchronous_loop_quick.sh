@@ -57,7 +57,7 @@ mkdir -p "$BASEDIR"/gatekeepersgf
 
 NUM_GAMES_PER_CYCLE=50 # Every cycle, play this many games
 NUM_THREADS_FOR_SHUFFLING=8
-NUM_TRAIN_SAMPLES_PER_EPOCH=100000  # Training will proceed in chunks of this many rows, subject to MAX_TRAIN_PER_DATA.
+NUM_TRAIN_SAMPLES_PER_EPOCH=1000  # Training will proceed in chunks of this many rows, subject to MAX_TRAIN_PER_DATA.
 MAX_TRAIN_PER_DATA=8 # On average, train only this many times on each data row. Larger numbers may cause overfitting.
 NUM_TRAIN_SAMPLES_PER_SWA=80000  # Stochastic weight averaging frequency.
 BATCHSIZE=128 # For lower-end GPUs 64 or smaller may be needed to avoid running out of GPU memory.

@@ -8,7 +8,7 @@ ${PYTHON_FOLDER}
 EOF
 
 source ${PYTHON_FOLDER}/venv/bin/activate 
-pip install psutil numpy
+pip install psutil numpy torch packaging
 #pip install python-chess==0.31.4 pytorch-lightning==1.9.0 torch matplotlib
 #ver=$(python3 ${SCRIPT_FOLDER}/build/cupy_cuda_version.py | sed 's/\.//g')
 #pip install cupy-cuda${ver} tensorboard
