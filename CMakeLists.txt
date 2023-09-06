@@ -14,7 +14,4 @@ add_link_options(-m64 -Wl,--no-as-needed)
 endif()
 add_subdirectory(source)
 file(COPY ${PROJECT_SOURCE_DIR}/data DESTINATION ${PROJECT_BINARY_DIR})
-set(SGF_FOLDER "${PROJECT_BINARY_DIR}/data/sgf")
-configure_file("${PROJECT_BINARY_DIR}/data/configs/selfplay/selfplay1.cfg.in" "${PROJECT_BINARY_DIR}/data/configs/selfplay/selfplay1.cfg" @ONLY)
-configure_file("${PROJECT_BINARY_DIR}/data/configs/selfplay/gatekeeper1.cfg.in" "${PROJECT_BINARY_DIR}/data/configs/selfplay/gatekeeper1.cfg" @ONLY)
-
+add_subdirectory(data)
