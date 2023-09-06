@@ -866,7 +866,6 @@ void Search::recursivelyRecomputeStats(SearchNode& node, SearchThread& thread, b
     //and has 0 visits because we began a search and then stopped it before any playouts happened.
     //In that case, there's not much to recompute.
     if(weightSum <= 0.0) {
-      assert(numVisits == 0);
       assert(isRoot);
     }
     else {

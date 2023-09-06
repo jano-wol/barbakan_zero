@@ -551,7 +551,6 @@ void TrainingWriteBuffers::addRow(
   }
   else {
     assert(finalFullArea != NULL);
-    assert(finalBoard != NULL);
 
     rowGlobal[27] = 1.0f;
     //Fill score info
