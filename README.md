@@ -19,6 +19,18 @@ To check that you have a working repo for development run the followings from th
 ./source/scripts/test.sh release  
 (last message should be 'All tests passed')  
 
-# train
+# train NN model
+After 
+./source/scripts/build.sh release  
+nn model train can be started by:
+./source/scripts/train.sh release train_id
 
-./source/scripts/train.sh release 
+If tran_id is a new id, then a new training process will be started. Otherwise, the training process corresponding to the already existing id will be continued. The output folder of the training process is  
+./data/train/train_id
+This is not cleaned by the configure step.
+
+Currently train.sh will always train a hard coded NN model corresponding to model id b6c96 (see ./source/python/modelconfigs.py for all the possibilities). 
+To change this hard coded value, adjust line  
+NN_ID=b6c96  
+in   
+./source/scripts/train/loop_call.sh  
