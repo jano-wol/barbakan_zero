@@ -8,8 +8,7 @@
 
 int16_t evaluate(Position * p)
 {
-	int i, initiative, res, sq;
-	uint64_t h;
+	int res, sq;
 	table loop;
 
 	res = 0;

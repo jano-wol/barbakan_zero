@@ -35,7 +35,6 @@ table Picker::picker(Position * p)
 	int dir1, dir2, sq;
 	table ret;
 	table loop;
-	table t;
 	
 	if (is_extreme_pos)
 	{
@@ -490,7 +489,9 @@ table Picker::picker(Position * p)
 		ret &= (~(sent));
 		stage_curr = END_REGULAR;
 		return ret;
-	}							
+	}
+	ret.null();
+	return ret;
 }
 
 Picker_surewin::Picker_surewin (Position * p)
@@ -762,7 +763,7 @@ skip_not_interesting_not_attackline:
 
 table Picker::picker_defense(Position * p) // same as the surewin defense
 {
-	int dir1, dir2, sq;
+	int dir1, dir2;
 	table ret;
 		
 	if (stage == START_DEF)
@@ -934,14 +935,14 @@ table Picker::picker_defense(Position * p) // same as the surewin defense
 		stage_curr = END_DEF;
 		return legal;
 	}
+	legal.null();
+	return legal;
 }
 
 table Picker_surewin::picker_surewin_defense(Position * p)
 {
-	int dir1, dir2, sq;
+	int dir1, dir2;
 	table ret;
-	uint8_t depth;
-	bool easy;
 		
 	if (stage == START_DEF)
 	{
@@ -1109,6 +1110,8 @@ table Picker_surewin::picker_surewin_defense(Position * p)
 		stage_curr = END_DEF;
 		return legal;
 	}
+	legal.null();
+	return legal;
 }
 
 Picker_fourwin::Picker_fourwin (Position * p)
@@ -1277,6 +1280,8 @@ skip_not_interesting_not_attackline:
 		stage_curr = END_FOURWIN;
 		return legal;
 	}
+	legal.null();
+	return legal;
 }
 
 
