@@ -1,8 +1,9 @@
 #!/bin/bash
 set -ex
 source ${PYTHON_FOLDER}/venv/bin/activate
-SELFPLAY_FOLDER="${TRAIN_FOLDER}/${1}"
-rm -rf "${SELFPLAY_FOLDER}"
-mkdir -p "${SELFPLAY_FOLDER}"
-source $(dirname "${0}")/test/synchronous_loop_test.sh np "${SELFPLAY_FOLDER}" selfplay_test b6c96 1
+SELFPLAY_FOLDER="${TRAIN_FOLDER}/${2}"
+if [ ! -d "$SELFPLAY_FOLDER" ]; then
+  mkdir -p "${SELFPLAY_FOLDER}"
+fi
+source $(dirname "${0}")/train/synchronous_loop.sh np "${SELFPLAY_FOLDER}" ${2} b6c96 1
 
