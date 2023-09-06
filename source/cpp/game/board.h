@@ -141,6 +141,7 @@ struct Table
 		{
 			return index64[((t[7] ^ (t[7] - 1)) * (0x03f79d71b4cb0a89)) >> 58] + 448;
 		}
+		return -1;
 	}
 
 	void print(int boardSize)

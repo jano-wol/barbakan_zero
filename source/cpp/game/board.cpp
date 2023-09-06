@@ -1407,7 +1407,7 @@ bool Board::isOnBoard(Loc loc) const {
 }
 
 //Check if moving here is legal.
-bool Board::isLegal(Loc loc, Player pla) const
+bool Board::isLegal(Loc loc, Player /*pla*/) const
 {
 	if (isOnBoard(loc) == false)
 	{
