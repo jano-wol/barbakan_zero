@@ -8,6 +8,7 @@
 **/.idea
 **/__pycache__
 **/data/bin
+**/data/train
 
 # Neural network for the NNUE evaluation
 **/*.nnue

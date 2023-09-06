@@ -18,3 +18,7 @@ To check that you have a working repo for development run the followings from th
 ./source/scripts/build.sh release  
 ./source/scripts/test.sh release  
 (last message should be 'All tests passed')  
+
+# train
+
+./source/scripts/train.sh release 
