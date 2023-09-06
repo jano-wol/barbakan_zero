@@ -23,9 +23,7 @@ To check that you have a working repo for development run the followings from th
 After the build step is ready nn model train can be started by:  
 ./source/scripts/train.sh release train_id
 
-If train_id is a new id, then a new training process will be started. Otherwise, the training process corresponding to the already existing id will be continued. The output folder of the training process is  
-./data/train/train_id
-This is not cleaned by the configure step.
+If train_id is a new id, then a new training process will be started. Otherwise, the training process corresponding to the already existing id will be continued. The output folder of the training process is ./data/train/train_id. (This is not cleaned by the configure step.)
 
 Currently train.sh will always train a hard coded NN model corresponding to model id b6c96 (see ./source/python/modelconfigs.py for all the possibilities). 
 To change this hard coded value, adjust line  
