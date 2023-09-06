@@ -1100,7 +1100,6 @@ int MainCmds::dataminesgfs(int argc, const char* const* argv) {
     if(board.x_size != 19 || board.y_size != 19)
       return;
 
-    const bool preventEncore = true;
     const vector<Move>& sgfMoves = sgf->moves;
 
     vector<Board> boards;
@@ -1117,7 +1116,6 @@ int MainCmds::dataminesgfs(int argc, const char* const* argv) {
     for(int m = 0; m<sgfMoves.size()+1; m++) {
       MiscNNInputParams nnInputParams;
       NNResultBuf buf;
-      bool skipCache = true; //Always ignore cache so that we get more entropy on repeated board positions due to symmetries
       bool includeOwnerMap = false;
       nnEval->evaluate(board,hist,nextPla,nnInputParams,buf,includeOwnerMap);
 
@@ -1275,7 +1273,6 @@ int MainCmds::dataminesgfs(int argc, const char* const* argv) {
     //This is hacky and makes everything quadratic, but whatever
     Board board = treeHist.initialBoard;
     for(int i = 0; i<startTurn; i++) {
-      bool multiStoneSuicideLegal = true;
       //Just in case
       if(!board.isLegal(treeHist.moveHistory[i].loc,treeHist.moveHistory[i].pla))
         return;
@@ -1295,7 +1292,6 @@ int MainCmds::dataminesgfs(int argc, const char* const* argv) {
     Rules rules = gameInit->createRules();
 
     //Now play the rest of the moves out, except the last, which we keep as the potential hintloc
-    int encorePhase = 0;
     Player pla = sample.nextPla;
     BoardHistory hist(board,pla,rules);
     int numSampleMoves = (int)sample.moves.size();
@@ -1322,7 +1318,6 @@ int MainCmds::dataminesgfs(int argc, const char* const* argv) {
 
     MiscNNInputParams nnInputParams;
     NNResultBuf buf;
-    bool skipCache = true; //Always ignore cache so that we get more entropy on repeated board positions due to symmetries
     bool includeOwnerMap = false;
     nnEval->evaluate(board,hist,pla,nnInputParams,buf,includeOwnerMap);
 
