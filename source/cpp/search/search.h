@@ -47,9 +47,9 @@ struct ReportedSearchValues {
 
 struct NodeStats {
   int64_t visits;
+  double winValueSum;
   int sureWinStatus;
   Loc sureWinLoc;
-  double winValueSum;
   double noResultValueSum;
   double scoreMeanSum;
   double scoreMeanSqSum;

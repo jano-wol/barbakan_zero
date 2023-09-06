@@ -258,6 +258,7 @@ inline int bitScanForward(table bb)
 	{
 		return index64[((bb.t[7] ^ (bb.t[7] - 1)) * (0x03f79d71b4cb0a89)) >> 58] + 448;
 	}
+	return -1;
 }
 
 extern uint32_t border_bit[DIRECTION_NB][BOARDS + BOARDS - 1];

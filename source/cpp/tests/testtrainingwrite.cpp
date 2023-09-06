@@ -95,7 +95,6 @@ void Tests::runTrainingWriteTests() {
 
     Board initialBoard(boardXLen,boardYLen);
     Player initialPla = P_BLACK;
-    int initialEncorePhase = 0;
     BoardHistory initialHist(initialBoard,initialPla,rules);
 
     ExtraBlackAndKomi extraBlackAndKomi;
@@ -217,7 +216,6 @@ void Tests::runSelfplayInitTestsWithNN(const string& modelFile) {
 
     Board initialBoard(11,11);
     Player initialPla = P_BLACK;
-    int initialEncorePhase = 0;
     BoardHistory initialHist(initialBoard,initialPla,rules);
 
     ExtraBlackAndKomi extraBlackAndKomi;
@@ -391,7 +389,6 @@ void Tests::runMoreSelfplayTestsWithNN(const string& modelFile) {
 
     Board initialBoard(11,11);
     Player initialPla = P_BLACK;
-    int initialEncorePhase = 0;
     if(testHint) {
       initialBoard = Board::parseBoard(11,11,R"%%(
 ...........
@@ -569,7 +566,6 @@ void Tests::runMoreSelfplayTestsWithNN(const string& modelFile) {
 
     Board initialBoard(11,11);
     Player initialPla = P_BLACK;
-    int initialEncorePhase = 0;
     BoardHistory initialHist(initialBoard,initialPla,rules);
 
     ExtraBlackAndKomi extraBlackAndKomi;

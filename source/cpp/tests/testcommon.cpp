@@ -2,7 +2,7 @@
 
 using namespace std;
 
-bool TestCommon::boardsSeemEqual(const Board& b1, const Board& b2) {
+bool TestCommon::boardsSeemEqual(const Board& /*b1*/, const Board& /*b2*/) {
   /*
   for(int i = 0; i<Board::MAX_ARR_SIZE; i++)
     if(b1.colors[i] != b2.colors[i])

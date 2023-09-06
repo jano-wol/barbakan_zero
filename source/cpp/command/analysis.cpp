@@ -139,8 +139,6 @@ int MainCmds::analysis(int argc, const char* const* argv) {
   loadParams(cfg, defaultParams, defaultPerspective, C_EMPTY);
 
   const int analysisPVLen = cfg.contains("analysisPVLen") ? cfg.getInt("analysisPVLen",1,100) : 15;
-  const bool assumeMultipleStartingBlackMovesAreHandicap =
-    cfg.contains("assumeMultipleStartingBlackMovesAreHandicap") ? cfg.getBool("assumeMultipleStartingBlackMovesAreHandicap") : true;
   const bool preventEncore = cfg.contains("preventCleanupPhase") ? cfg.getBool("preventCleanupPhase") : true;
 
   NNEvaluator* nnEval;
@@ -579,7 +577,7 @@ int MainCmds::analysis(int argc, const char* const* argv) {
         boardYSize = (int)yBuf;
       }
 
-      auto parseBoardLocs = [boardXSize,boardYSize,&rbase,&reportErrorForId](const json& dict, const char* field, vector<Loc>& buf, bool allowPass) {
+      auto parseBoardLocs = [boardXSize,boardYSize,&rbase,&reportErrorForId](const json& dict, const char* field, vector<Loc>& buf, bool /*allowPass*/) {
         buf.clear();
         if(!dict[field].is_array()) {
           reportErrorForId(rbase.id, field, "Must be an array of GTP board vertices");
@@ -607,7 +605,7 @@ int MainCmds::analysis(int argc, const char* const* argv) {
         return true;
       };
 
-      auto parseBoardMoves = [boardXSize,boardYSize,&rbase,&reportErrorForId](const json& dict, const char* field, vector<Move>& buf, bool allowPass) {
+      auto parseBoardMoves = [boardXSize,boardYSize,&rbase,&reportErrorForId](const json& dict, const char* field, vector<Move>& buf, bool /*allowPass*/) {
         buf.clear();
         if(!dict[field].is_array()) {
           reportErrorForId(rbase.id, field, "Must be an array of pairs of the form: [\"b\" or \"w\", GTP board vertex]");

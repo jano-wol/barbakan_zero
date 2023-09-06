@@ -512,7 +512,7 @@ void NNEvaluator::evaluate(
   Player nextPlayer,
   const MiscNNInputParams& nnInputParams,
   NNResultBuf& buf,
-  bool includeOwnerMap
+  bool /*includeOwnerMap*/
 ) {
   assert(!isKilled);
   buf.hasResult = false;
@@ -759,9 +759,6 @@ void NNEvaluator::evaluate(
         double winLogits = buf.result->whiteWinProb;
         double lossLogits = buf.result->whiteLossProb;
         double noResultLogits = buf.result->whiteNoResultProb;
-        double scoreMeanPreScaled = buf.result->whiteScoreMean;
-        double scoreStdevPreSoftplus = buf.result->whiteScoreMeanSq;
-        double leadPreScaled = buf.result->whiteLead;
         double varTimeLeftPreSoftplus = buf.result->varTimeLeft;
         double shorttermWinlossErrorPreSoftplus = buf.result->shorttermWinlossError;
         double shorttermScoreErrorPreSoftplus = buf.result->shorttermScoreError;
@@ -780,7 +777,6 @@ void NNEvaluator::evaluate(
         noResultProb /= probSum;
 
         scoreMean = 0;
-        double scoreStdev = 0;
         scoreMeanSq = 0;
         lead = 0;
         varTimeLeft = softPlus(varTimeLeftPreSoftplus) * postProcessParams.varianceTimeMultiplier;

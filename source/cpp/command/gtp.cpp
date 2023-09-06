@@ -752,7 +752,7 @@ struct GTPEngine {
   void genMove(
     Player pla,
     Logger& logger, double searchFactorWhenWinningThreshold, double searchFactorWhenWinning,
-    bool cleanupBeforePass, bool ogsChatToStderr,
+    bool /*cleanupBeforePass*/, bool ogsChatToStderr,
     bool allowResignation, double resignThreshold, int resignConsecTurns, double resignMinScoreDifference,
     bool logSearchInfo, bool debug, bool playChosenMove,
     string& response, bool& responseIsError, bool& maybeStartPondering,
@@ -1124,7 +1124,6 @@ struct GTPEngine {
         nnInputParams.symmetry = symmetry;
         nnInputParams.policyOptimism = policyOptimism;
         NNResultBuf buf;
-        bool skipCache = true;
         bool includeOwnerMap = true;
         nnEval->evaluate(board,hist,nextPla,nnInputParams,buf,includeOwnerMap);
 
@@ -1166,7 +1165,6 @@ struct GTPEngine {
         out << "whiteOwnership" << endl;
         for(int y = 0; y<board.y_size; y++) {
           for(int x = 0; x<board.x_size; x++) {
-            int pos = NNPos::xyToPos(x,y,nnOutput->nnXLen);
             float whiteOwn = 0;
             out << Global::strprintf("%9.7f ", whiteOwn);
           }
@@ -2261,7 +2259,6 @@ int MainCmds::gtp(int argc, const char* const* argv) {
         Board board(xSize,ySize);
         for(int i = 0; i<pieces.size(); i++) {
           Loc loc;
-          bool suc = tryParseLoc(pieces[i],board,loc);
           locs.push_back(loc);
         }
         for(int i = 0; i<locs.size(); i++)

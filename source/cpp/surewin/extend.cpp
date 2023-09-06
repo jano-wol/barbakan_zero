@@ -638,6 +638,8 @@ again:
 		stage_curr = END_DEF_EXTEND;
 		return legal;
 	}
+	legal.null();
+	return legal;
 }
 
 int surewin_extend_attack (Position * p, int8_t depth_left, uint8_t ply, table attackline, bool easy)
@@ -663,14 +665,15 @@ int surewin_extend_attack (Position * p, int8_t depth_left, uint8_t ply, table a
 	// is there legal move
 	if (!(!pick.legal))
 	{
-		if (!(~(p->square[0] | p->square[1]))) // somebody win
-		{
-			return 0;
-		}
-		else //draw
-		{
-			return 0;
-		}
+//		if (!(~(p->square[0] | p->square[1]))) // somebody win
+//		{
+//			return 0;
+//		}
+//		else //draw
+//		{
+//			return 0;
+//		}
+        return 0;
 	}
 	
 	//check tt
@@ -761,7 +764,6 @@ int surewin_extend_attack (Position * p, int8_t depth_left, uint8_t ply, table a
 int surewin_extend_defense (Position * p, int8_t depth_left, uint8_t ply, table attackline, bool easy)
 {
 	int sq;
-	int new_depth;
 	table loop;	
 	
 	if (print)

@@ -465,7 +465,7 @@ void Sgf::iterAllUniquePositions(
 
 void Sgf::iterAllUniquePositionsHelper(
   Board& board, BoardHistory& hist, Player nextPla,
-  const Rules& rules, int xSize, int ySize,
+  const Rules& /*rules*/, int xSize, int ySize,
   PositionSample& sampleBuf,
   int initialTurnNumber,
   std::set<Hash128>& uniqueHashes,
@@ -1118,7 +1118,7 @@ void CompactSgf::playMovesAssumeLegal(Board& board, Player& nextPla, BoardHistor
   }
 }
 
-void CompactSgf::playMovesTolerant(Board& board, Player& nextPla, BoardHistory& hist, int64_t turnIdx, bool preventEncore) const {
+void CompactSgf::playMovesTolerant(Board& board, Player& nextPla, BoardHistory& hist, int64_t turnIdx, bool /*preventEncore*/) const {
   if(turnIdx < 0 || turnIdx > moves.size())
     throw StringError(
       Global::strprintf(

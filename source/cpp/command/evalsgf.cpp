@@ -89,7 +89,7 @@ int MainCmds::evalsgf(int argc, const char* const* argv) {
     sgfFile = sgfFileArg.getValue();
     moveNum = moveNumArg.getValue();
     printBranch = printBranchArg.getValue();
-    string print = printArg.getValue();
+    string printLocal = printArg.getValue();
     extraMoves = extraMovesArg.getValue();
     string extra = extraArg.getValue();
     hintLoc = hintLocArg.getValue();
@@ -106,12 +106,12 @@ int MainCmds::evalsgf(int argc, const char* const* argv) {
     printLead = printLeadArg.getValue();
     rawNN = rawNNArg.getValue();
 
-    if(printBranch.length() > 0 && print.length() > 0) {
+    if(printBranch.length() > 0 && printLocal.length() > 0) {
       cerr << "Error: -print-branch and -print both specified" << endl;
       return 1;
     }
     if(printBranch.length() <= 0)
-      printBranch = print;
+      printBranch = printLocal;
 
     if(extraMoves.length() > 0 && extra.length() > 0) {
       cerr << "Error: -extra-moves and -extra both specified" << endl;
@@ -240,7 +240,6 @@ int MainCmds::evalsgf(int argc, const char* const* argv) {
 
   if(rawNN) {
     NNResultBuf buf;
-    bool skipCache = true;
     bool includeOwnerMap = true;
     MiscNNInputParams nnInputParams;
     nnInputParams.drawEquivalentWinsForWhite = params.drawEquivalentWinsForWhite;

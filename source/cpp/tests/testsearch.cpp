@@ -11,10 +11,10 @@
 using namespace std;
 using namespace TestCommon;
 
-static string getSearchRandSeed() {
+/*static string getSearchRandSeed() {
   static int seedCounter = 0;
   return string("testSearchSeed") + Global::intToString(seedCounter++);
-}
+}*/
 
 struct TestSearchOptions {
   int numMovesInARow;
@@ -41,15 +41,15 @@ struct TestSearchOptions {
   {}
 };
 
-static void printPolicyValueOwnership(const Board& board, const NNResultBuf& buf) {
+/*static void printPolicyValueOwnership(const Board& board, const NNResultBuf& buf) {
   cout << board << endl;
   cout << endl;
   buf.result->debugPrint(cout,board);
-}
+}*/
 
-static void runBotOnPosition(AsyncBot* bot, Board board, Player nextPla, BoardHistory hist, TestSearchOptions opts) {
+/*static void runBotOnPosition(AsyncBot* bot, Board board, Player nextPla, BoardHistory hist, TestSearchOptions opts) {
 
-  /*if(!opts.ignorePosition)
+  if(!opts.ignorePosition)
     bot->setPosition(nextPla,board,hist);
 
   PrintTreeOptions options;
@@ -122,11 +122,11 @@ static void runBotOnPosition(AsyncBot* bot, Board board, Player nextPla, BoardHi
     search->nnEvaluator->clearStats();
   }
   if(!opts.noClearBot)
-    bot->clearSearch();*/
-}
+    bot->clearSearch();
+}*/
 
-static void runBotOnSgf(AsyncBot* bot, const string& sgfStr, const Rules& defaultRules, int turnIdx, float overrideKomi, TestSearchOptions opts) {
-  /*CompactSgf* sgf = CompactSgf::parse(sgfStr);
+/*static void runBotOnSgf(AsyncBot* bot, const string& sgfStr, const Rules& defaultRules, int turnIdx, float overrideKomi, TestSearchOptions opts) {
+  CompactSgf* sgf = CompactSgf::parse(sgfStr);
 
   Board board;
   Player nextPla;
@@ -135,10 +135,10 @@ static void runBotOnSgf(AsyncBot* bot, const string& sgfStr, const Rules& defaul
   sgf->setupBoardAndHistAssumeLegal(initialRules, board, nextPla, hist, turnIdx);
   hist.setKomi(overrideKomi);
   runBotOnPosition(bot,board,nextPla,hist,opts);
-  delete sgf;*/
-}
+  delete sgf;
+}*/
 
-static NNEvaluator* startNNEval(
+/*static NNEvaluator* startNNEval(
   const string& modelFile, Logger& logger, const string& seed, int nnXLen, int nnYLen,
   int defaultSymmetry, bool inputsUseNHWC, bool useNHWC, bool useFP16, bool debugSkipNeuralNet,
   bool requireExactNNLen
@@ -196,9 +196,9 @@ static NNEvaluator* startNNEval(
   //Hack to get more consistent ordering of log messages spawned by nnEval threads with other output.
   std::this_thread::sleep_for(std::chrono::duration<double>(0.1));
   return nnEval;
-}
+}*/
 
-static void runBasicPositions(NNEvaluator* nnEval, Logger& logger)
+/*static void runBasicPositions(NNEvaluator* nnEval, Logger& logger)
 {
   {
     SearchParams params;
@@ -355,10 +355,10 @@ static void runBasicPositions(NNEvaluator* nnEval, Logger& logger)
 
     delete bot;
   }
-}
+}*/
 
-static void runOwnershipAndMisc(NNEvaluator* nnEval, NNEvaluator* nnEval11, NNEvaluator* nnEvalPTemp, Logger& logger)
-{/*
+/*static void runOwnershipAndMisc(NNEvaluator* nnEval, NNEvaluator* nnEval11, NNEvaluator* nnEvalPTemp, Logger& logger)
+{
   {
     cout << "GAME 5 ==========================================================================" << endl;
     cout << "(A simple opening to test neural net outputs including ownership map)" << endl;
@@ -768,12 +768,12 @@ xx.o.o.o.
     runBotOnPosition(bot,board,nextPla,hist,opts);
 
     delete bot;
-  }*/
-}
+  }
+}*/
 
-static void runV8Tests(NNEvaluator* nnEval, NNEvaluator* nnEval19Exact, Logger& logger)
+/*static void runV8Tests(NNEvaluator* nnEval, NNEvaluator* nnEval19Exact, Logger& logger)
 {
-  /*{
+  {
     cout << "TEST EXACT (NO MASKING) VS MASKED ==========================================================================" << endl;
 
     string sgfStr = "(;GM[1]FF[4]CA[UTF-8]RU[Japanese]SZ[19]KM[6.5];B[dd];W[qd];B[pq];W[dp];B[oc];W[pe];B[fq];W[jp];B[ph];W[cf];B[ck])";
@@ -1217,9 +1217,9 @@ static void runV8Tests(NNEvaluator* nnEval, NNEvaluator* nnEval19Exact, Logger& 
     nnEval->spawnServerThreads();
   }
 
-}
+}*/
 
-static void runMoreV8Tests(NNEvaluator* nnEval, Logger& logger)
+/*tatic void runMoreV8Tests(NNEvaluator* nnEval, Logger& logger)
 {
   {
     cout << "TEST VALUE BIAS ==========================================================================" << endl;
@@ -1724,11 +1724,11 @@ xxxx.xxoxxx
     //Reset random seeds for nnEval
     nnEval->killServerThreads();
     nnEval->spawnServerThreads();
-  }*/
+  }
 
-}
+}*/
 
-static void runMoreV8TestsRandomizedNNEvals(NNEvaluator* nnEval, Logger& logger)
+/*static void runMoreV8TestsRandomizedNNEvals(NNEvaluator* nnEval, Logger& logger)
 {
   {
     cout << "TEST sampled symmetries ==========================================================================" << endl;
@@ -1818,10 +1818,10 @@ static void runMoreV8TestsRandomizedNNEvals(NNEvaluator* nnEval, Logger& logger)
 
   }
 
-}
+}*/
 
 
-void Tests::runSearchTests(const string& modelFile, bool inputsNHWC, bool cudaNHWC, int symmetry, bool useFP16) {
+void Tests::runSearchTests(const string& /*modelFile*/, bool /*inputsNHWC*/, bool /*cudaNHWC*/, int /*symmetry*/, bool /*useFP16*/) {
   /*
   cout << "Running search tests" << endl;
   NeuralNet::globalInitialize();
@@ -1837,7 +1837,7 @@ void Tests::runSearchTests(const string& modelFile, bool inputsNHWC, bool cudaNH
   NeuralNet::globalCleanup();*/
 }
 
-void Tests::runSearchTestsV3(const string& modelFile, bool inputsNHWC, bool cudaNHWC, int symmetry, bool useFP16) {
+void Tests::runSearchTestsV3(const string& /*modelFile*/, bool /*inputsNHWC*/, bool /*cudaNHWC*/, int /*symmetry*/, bool /*useFP16*/) {
   /*
   cout << "Running search tests specifically for v3 or later nets" << endl;
   NeuralNet::globalInitialize();
@@ -1857,7 +1857,7 @@ void Tests::runSearchTestsV3(const string& modelFile, bool inputsNHWC, bool cuda
   NeuralNet::globalCleanup();*/
 }
 
-void Tests::runSearchTestsV8(const string& modelFile, bool inputsNHWC, bool cudaNHWC, bool useFP16) {
+void Tests::runSearchTestsV8(const string& /*modelFile*/, bool /*inputsNHWC*/, bool /*cudaNHWC*/, bool /*useFP16*/) {
   /*
   cout << "Running search tests introduced after v8 nets" << endl;
   NeuralNet::globalInitialize();
@@ -2535,7 +2535,7 @@ o.oo.oo
   NeuralNet::globalCleanup();*/
 }
 
-void Tests::runNNOnTinyBoard(const string& modelFile, bool inputsNHWC, bool cudaNHWC, int symmetry, bool useFP16) {/*
+void Tests::runNNOnTinyBoard(const string& /*modelFile*/, bool /*inputsNHWC*/, bool /*cudaNHWC*/, int /*symmetry*/, bool /*useFP16*/) {/*
   NeuralNet::globalInitialize();
 
   Board board = Board::parseBoard(5,5,R"%%(
@@ -2569,7 +2569,7 @@ void Tests::runNNOnTinyBoard(const string& modelFile, bool inputsNHWC, bool cuda
   NeuralNet::globalCleanup();*/
 }
 
-void Tests::runNNSymmetries(const string& modelFile, bool inputsNHWC, bool cudaNHWC, bool useFP16) {/*
+void Tests::runNNSymmetries(const string& /*modelFile*/, bool /*inputsNHWC*/, bool /*cudaNHWC*/, bool /*useFP16*/) {/*
   NeuralNet::globalInitialize();
 
   Board board = Board::parseBoard(9,13,R"%%(
@@ -2618,7 +2618,7 @@ void Tests::runNNSymmetries(const string& modelFile, bool inputsNHWC, bool cudaN
 }
 
 
-void Tests::runNNOnManyPoses(const string& modelFile, bool inputsNHWC, bool cudaNHWC, int symmetry, bool useFP16, const string& comparisonFile) {/*
+void Tests::runNNOnManyPoses(const string& /*modelFile*/, bool /*inputsNHWC*/, bool /*cudaNHWC*/, int /*symmetry*/, bool /*useFP16*/, const string& /*comparisonFile*/) {/*
   NeuralNet::globalInitialize();
 
   string sgfStr = "(;SZ[19]FF[3]PW[Go Seigen]WR[9d]PB[Takagawa Shukaku]BR[8d]DT[1957-09-26]KM[0]RE[W+R];B[qd];W[dc];B[pp];W[cp];B[eq];W[oc];B[ce];W[dh];B[fe];W[gc];B[do];W[co];B[dn];W[cm];B[jq];W[qn];B[pn];W[pm];B[on];W[qq];B[qo];W[or];B[mr];W[mq];B[nr];W[oq];B[lq];W[qm];B[rp];W[rq];B[qg];W[mp];B[lp];W[mo];B[om];W[pk];B[kn];W[mm];B[ok];W[pj];B[mk];W[op];B[dm];W[cl];B[dl];W[dk];B[ek];W[ll];B[cn];W[bn];B[bo];W[bm];B[cq];W[bp];B[oj];W[ph];B[qh];W[oi];B[qi];W[pi];B[mi];W[of];B[ki];W[qc];B[rc];W[qe];B[re];W[pd];B[rd];W[de];B[df];W[cd];B[ee];W[dd];B[fg];W[hd];B[jl];W[dj];B[bf];W[fj];B[hg];W[dp];B[ep];W[jk];B[il];W[fk];B[ie];W[he];B[hf];W[gm];B[ke];W[fo];B[eo];W[in];B[ho];W[hn];B[fn];W[gn];B[go];W[io];B[ip];W[jp];B[hq];W[qf];B[rf];W[qb];B[ik];W[lr];B[id];W[kr];B[jr];W[bq];B[ib];W[hb];B[cr];W[rj];B[rb];W[kk];B[ij];W[ic];B[jc];W[jb];B[hc];W[iq];B[ir];W[ic];B[kq];W[kc];B[hc];W[nj];B[nk];W[ic];B[oe];W[jd];B[pe];W[pf];B[od];W[pc];B[md];W[mc];B[me];W[ld];B[ng];W[ri];B[rh];W[pg];B[fl];W[je];B[kg];W[be];B[cf];W[bh];B[bd];W[bc];B[ae];W[kl];B[rn];W[mj];B[lj];W[ni];B[lk];W[mh];B[li];W[mg];B[mf];W[nh];B[jf];W[qj];B[sh];W[rm];B[km];W[if];B[ig];W[dq];B[dr];W[br];B[ci];W[gi];B[ei];W[ej];B[di];W[gl];B[bi];W[cj];B[sq];W[sr];B[so];W[sp];B[fc];W[fb];B[sq];W[lo];B[rr];W[sp];B[ec];W[eb];B[sq];W[ko];B[jn];W[sp];B[nc];W[nb];B[sq];W[nd];B[jo];W[sp];B[qr];W[pq];B[sq];W[ns];B[ks];W[sp];B[bk];W[bj];B[sq];W[ol];B[nl];W[sp];B[aj];W[ck];B[sq];W[nq];B[ls];W[sp];B[gk];W[qp];B[po];W[ro];B[gj];W[eh];B[rp];W[fi];B[sq];W[pl];B[nm];W[sp];B[ch];W[ro];B[dg];W[sn];B[ne];W[er];B[fr];W[cs];B[es];W[fh];B[bb];W[cb];B[ac];W[ba];B[cc];W[el];B[fm];W[bc])";

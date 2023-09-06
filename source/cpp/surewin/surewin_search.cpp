@@ -167,7 +167,7 @@ out:
 
 int16_t search (Position * p, int alpha, int beta, uint8_t depth_left, uint8_t ply)
 {
-	int sq, i, s_t_p;
+	int sq;
 	int16_t val;
 	uint16_t tt_move, best_move;
 	int16_t tt_val;
@@ -338,14 +338,15 @@ int surewin_attack (Position * p, int8_t depth_left, uint8_t ply, table attackli
 	// is there legal move
 	if (!(!pick.legal))
 	{
-		if (!(~(p->square[0] | p->square[1]))) // somebody win
-		{
-			return 0;
-		}
-		else //draw
-		{
-			return 0;
-		}
+//		if (!(~(p->square[0] | p->square[1]))) // somebody win
+//		{
+//			return 0;
+//		}
+//		else //draw
+//		{
+//			return 0;
+//		}
+        return 0;
 	}
 	
 	//check tt
@@ -427,7 +428,6 @@ int surewin_attack (Position * p, int8_t depth_left, uint8_t ply, table attackli
 int surewin_defense (Position * p, int8_t depth_left, uint8_t ply, table attackline, bool easy)
 {
 	int sq;
-	int new_depth;
 	table loop;	
 	
 	if (p->nodes > 5000)
@@ -540,14 +540,15 @@ bool is_fourwin (Position * p, int8_t depth_left, uint8_t ply, table attackline)
 	// is there legal move
 	if (!(!pick.legal))
 	{
-		if (!(~(p->square[0] | p->square[1]))) // somebody win
-		{
-			return false;
-		}
-		else //draw
-		{
-			return false;
-		}
+//		if (!(~(p->square[0] | p->square[1]))) // somebody win
+//		{
+//			return false;
+//		}
+//		else //draw
+//		{
+//			return false;
+//		}
+        return false;
 	}
 	
 	while (!(loop = pick.picker_fourwin(p)))
@@ -610,7 +611,7 @@ bool is_fourwin (Position * p, int8_t depth_left, uint8_t ply, table attackline)
 
 bool is_fourwin (Position * p, int8_t depth_left, uint8_t ply, table attackline, int * winning_sequence)
 {
-	int sq, i;
+	int sq;
 	table new_attackline;
 	table loop;
 	table help;	
@@ -637,14 +638,15 @@ bool is_fourwin (Position * p, int8_t depth_left, uint8_t ply, table attackline,
 	// is there legal move
 	if (!(!pick.legal))
 	{
-		if (!(~(p->square[0] | p->square[1]))) // somebody win
-		{
-			return false;
-		}
-		else //draw
-		{
-			return false;
-		}
+//		if (!(~(p->square[0] | p->square[1]))) // somebody win
+//		{
+//			return false;
+//		}
+//		else //draw
+//		{
+//			return false;
+//		}
+        return false;
 	}
 	
 	while (!(loop = pick.picker_fourwin(p)))

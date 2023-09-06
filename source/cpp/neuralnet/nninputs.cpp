@@ -11,7 +11,7 @@ int NNPos::locToPos(Loc loc, int boardXSize, int nnXLen, int nnYLen) {
     return nnXLen * (nnYLen + 1);
   return Location::getY(loc,boardXSize) * nnXLen + Location::getX(loc,boardXSize);
 }
-Loc NNPos::posToLoc(int pos, int boardXSize, int boardYSize, int nnXLen, int nnYLen) {
+Loc NNPos::posToLoc(int pos, int boardXSize, int boardYSize, int nnXLen, int /*nnYLen*/) {
   int x = pos % nnXLen;
   int y = pos / nnXLen;
   if(x < 0 || x >= boardXSize || y < 0 || y >= boardYSize)
@@ -287,9 +287,6 @@ Hash128 NNInputs::getHash(
   const Board& board, const BoardHistory& hist, Player nextPlayer,
   const MiscNNInputParams& nnInputParams
 ) {
-  int xSize = board.x_size;
-  int ySize = board.y_size;
-
   //Note that board.pos_hash also incorporates the size of the board.
   Hash128 hash = board.pos_hash;
   hash ^= Board::ZOBRIST_PLAYER_HASH[nextPlayer];
@@ -335,7 +332,7 @@ Hash128 NNInputs::getHash(
 
 void NNInputs::fillRowV3(
   const Board& board, const BoardHistory& hist, Player nextPlayer,
-  const MiscNNInputParams& nnInputParams,
+  const MiscNNInputParams& /*nnInputParams*/,
   int nnXLen, int nnYLen, bool useNHWC, float* rowBin, float* rowGlobal
 ) {
   assert(nnXLen <= NNPos::MAX_BOARD_LEN);
@@ -432,23 +429,6 @@ void NNInputs::fillRowV3(
 
   //Features 18,19 - current territory
   Color area[Board::MAX_ARR_SIZE];
-  bool nonPassAliveStones;
-  bool safeBigTerritories;
-  bool unsafeBigTerritories;
-  if(hist.rules.scoringRule == Rules::SCORING_AREA) {
-    nonPassAliveStones = true;
-    safeBigTerritories = true;
-    unsafeBigTerritories = true;
-  }
-  else if(hist.rules.scoringRule == Rules::SCORING_TERRITORY) {
-    nonPassAliveStones = false;
-    safeBigTerritories = true;
-    unsafeBigTerritories = false;
-  }
-  else {
-    ASSERT_UNREACHABLE;
-  }
-
   for(int y = 0; y<ySize; y++) {
     for(int x = 0; x<xSize; x++) {
       Loc loc = Location::getLoc(x,y,xSize);
@@ -511,7 +491,7 @@ void NNInputs::fillRowV3(
 
 void NNInputs::fillRowV4(
   const Board& board, const BoardHistory& hist, Player nextPlayer,
-  const MiscNNInputParams& nnInputParams,
+  const MiscNNInputParams& /*nnInputParams*/,
   int nnXLen, int nnYLen, bool useNHWC, float* rowBin, float* rowGlobal
 ) {
   assert(nnXLen <= NNPos::MAX_BOARD_LEN);
@@ -663,7 +643,7 @@ void NNInputs::fillRowV4(
   rowGlobal[11] = 0.0f;
 
   //Does a pass end the current phase given the ruleset and history?
-  bool passWouldEndPhase = hideHistory ? false : false;
+  bool passWouldEndPhase = false; //hideHistory ? false : false;
   rowGlobal[12] = passWouldEndPhase ? 1.0f : 0.0f;
   rowGlobal[13] = 0.0f;
 
@@ -677,7 +657,7 @@ void NNInputs::fillRowV4(
 
 void NNInputs::fillRowV5(
   const Board& board, const BoardHistory& hist, Player nextPlayer,
-  const MiscNNInputParams& nnInputParams,
+  const MiscNNInputParams& /*nnInputParams*/,
   int nnXLen, int nnYLen, bool useNHWC, float* rowBin, float* rowGlobal
 ) {
   assert(nnXLen <= NNPos::MAX_BOARD_LEN);
@@ -785,7 +765,7 @@ void NNInputs::fillRowV5(
 
 void NNInputs::fillRowV6(
   const Board& board, const BoardHistory& hist, Player nextPlayer,
-  const MiscNNInputParams& nnInputParams,
+  const MiscNNInputParams& /*nnInputParams*/,
   int nnXLen, int nnYLen, bool useNHWC, float* rowBin, float* rowGlobal
 ) {
   assert(nnXLen <= NNPos::MAX_BOARD_LEN);
@@ -886,33 +866,7 @@ void NNInputs::fillRowV6(
   //Ladder features 14,15,16,17
 
   //Features 18,19 - current territory, not counting group tax
-  Color area[Board::MAX_ARR_SIZE];
-  bool hasAreaFeature = false;
-  if(hist.rules.scoringRule == Rules::SCORING_AREA && hist.rules.taxRule == Rules::TAX_NONE) {
-    hasAreaFeature = true;
-    bool nonPassAliveStones = true;
-    bool safeBigTerritories = true;
-    bool unsafeBigTerritories = true;
-  }
-  else {
-    bool keepTerritories = false;
-    bool keepStones = false;
-    int whiteMinusBlackIndependentLifeRegionCount = 0;
-    if(hist.rules.scoringRule == Rules::SCORING_AREA && (hist.rules.taxRule == Rules::TAX_SEKI || hist.rules.taxRule == Rules::TAX_ALL)) {
-      hasAreaFeature = true;
-      keepTerritories = false;
-      keepStones = true;
-    }
-    else {
-      ASSERT_UNREACHABLE;
-    }
 
-    if(hasAreaFeature) {
-    }
-  }
-
-  if(hasAreaFeature) {
-  }
 
   //Features 20, 21 - second encore starting stones
   //Global features. NOT USED
@@ -925,7 +879,7 @@ void NNInputs::fillRowV6(
 
 void NNInputs::fillRowV7(
   const Board& board, const BoardHistory& hist, Player nextPlayer,
-  const MiscNNInputParams& nnInputParams,
+  const MiscNNInputParams& /*nnInputParams*/,
   int nnXLen, int nnYLen, bool useNHWC, float* rowBin, float* rowGlobal
 ) {
   assert(nnXLen <= NNPos::MAX_BOARD_LEN);

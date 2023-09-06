@@ -9,10 +9,10 @@
 #include "extend.h"
 #include "types.h"
 
-void print_board_root(Position *);
-StateInfo st_main[1000];
+//void print_board_root(Position *);
+//StateInfo st_main[1000];
 
-int surewin_main(int argc, char *argv[])
+/*int surewin_main(int argc, char *argv[])
 {
 	int ply;
 	int move;
@@ -22,7 +22,6 @@ int surewin_main(int argc, char *argv[])
 	table t, s, loop;
 	char st_mainr[256];
 	char line[256];
-	uint16_t best;
 		
 	ply=0;
 	surewin_tt_setsize (10250000); 
@@ -34,7 +33,7 @@ int surewin_main(int argc, char *argv[])
 	t.null();
 	t = (~t);	
 	
-	sprintf(st_mainr, "/home/jano/Programs/Gomoku/Games/%s", argv[1]);
+	sprintf(st_mainr, "games_path_here", argv[1]);
 	if ((f=fopen(st_mainr, "r"))!=0)
 	{
 		if (fgets(line, 256, f) == NULL) // no need for the first_main line
@@ -351,4 +350,4 @@ int surewin_main(int argc, char *argv[])
 			}
 		}
 	}	
-}
+}*/

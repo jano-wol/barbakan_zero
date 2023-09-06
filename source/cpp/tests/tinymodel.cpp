@@ -113,7 +113,6 @@ void TinyModelTest::runTinyModelTest(const string& baseDir, Logger& logger, Conf
 
   MiscNNInputParams nnInputParams;
   NNResultBuf buf;
-  bool skipCache = true;
   bool includeOwnerMap = true;
   nnEval->evaluate(board,hist,nextPla,nnInputParams,buf,includeOwnerMap);
 

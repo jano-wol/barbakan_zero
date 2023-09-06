@@ -277,7 +277,7 @@ static void fillPolicyTarget(const vector<PolicyTargetMove>& policyTargetMoves, 
 
 //Converts a value in [-1,1] to an integer in [-120,120] to pack down to 8 bits.
 //Randomizes to make sure the expectation is exactly correct.
-static int8_t convertRadiusOneToRadius120(float x, Rand& rand) {
+/*static int8_t convertRadiusOneToRadius120(float x, Rand& rand) {
   //We need to pack this down to 8 bits, so map into [-120,120].
   //Randomize to ensure the expectation is exactly correct.
   x *= 120.0f;
@@ -289,7 +289,7 @@ static int8_t convertRadiusOneToRadius120(float x, Rand& rand) {
   float lambda = (float)(x-low);
   if(lambda == 0.0f) return (int8_t)low;
   else return (int8_t)(rand.nextBool(lambda) ? high : low);
-}
+}*/
 //Same, but for [-2,2].
 // static int8_t convertRadiusTwoToRadius120(float x, Rand& rand) {
 //   return convertRadiusOneToRadius120(x*0.5,rand);
@@ -338,10 +338,10 @@ void TrainingWriteBuffers::addRow(
   const vector<ValueTargets>& whiteValueTargets,
   int whiteValueTargetsIdx, //index in whiteValueTargets corresponding to this turn.
   const NNRawStats& nnRawStats,
-  const Board* finalBoard,
+  const Board* /*finalBoard*/,
   Color* finalFullArea,
   Color* finalOwnership,
-  float* finalWhiteScoring,
+  float* /*finalWhiteScoring*/,
   const vector<Board>* posHistForFutureBoards, //can be null
   bool isSidePosition,
   int numNeuralNetsBehindLatest,
@@ -551,7 +551,6 @@ void TrainingWriteBuffers::addRow(
   }
   else {
     assert(finalFullArea != NULL);
-    assert(finalBoard != NULL);
 
     rowGlobal[27] = 1.0f;
     //Fill score info

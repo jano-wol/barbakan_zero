@@ -181,7 +181,7 @@ table local_defense(Position * p, int sq)
 		what_to_do = what_to_do_global[p -> code_enviroment(line, border, index)];
 		if (what_to_do != 0)
 		{
-			if (pre_index = (what_to_do & 15))
+			if ((pre_index = (what_to_do & 15)))
 			{
 				if (pre_index > 8)
 				{
@@ -189,7 +189,7 @@ table local_defense(Position * p, int sq)
 				}
 				EXPAND(ret, (sq + pre_index * DIRECTION_SUREWIN(dir)));
 			}
-			if (pre_index = ((what_to_do & (15 << 4)) >> 4))
+			if ((pre_index = ((what_to_do & (15 << 4)) >> 4)))
 			{
 				if (pre_index > 8)
 				{
@@ -197,7 +197,7 @@ table local_defense(Position * p, int sq)
 				}
 				EXPAND(ret, (sq + pre_index * DIRECTION_SUREWIN(dir)));
 			}
-			if (pre_index = ((what_to_do & (15 << 8)) >> 8))
+			if ((pre_index = ((what_to_do & (15 << 8)) >> 8)))
 			{
 				if (pre_index > 8)
 				{
@@ -205,7 +205,7 @@ table local_defense(Position * p, int sq)
 				}
 				EXPAND(ret, (sq + pre_index * DIRECTION_SUREWIN(dir)));
 			}
-			if (pre_index = ((what_to_do & (15 << 12)) >> 12))
+			if ((pre_index = ((what_to_do & (15 << 12)) >> 12)))
 			{
 				if (pre_index > 8)
 				{

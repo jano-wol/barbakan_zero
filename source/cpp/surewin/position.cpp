@@ -60,7 +60,7 @@ Key Position::compute_key() const
 	return k;
 }
 
-void print_general(uint32_t line, uint32_t border)
+/*void print_general(uint32_t line, uint32_t border)
 {
 	int i;
 	
@@ -168,13 +168,12 @@ void print_general(Position * p, table s)
 	{
 		printf("X\n");
 	}	
-}
+}*/
 
 void Position::init() //it initialize the position globals, and make a clear board 
 {
-	int res, i_help, j_help, k, l;
-	uint32_t i, j, m, dir;
-	uint32_t line, empty, border;
+	int k;
+	uint32_t i, j;
 	RKISS rk;
 
 	for (i = 0; i < 3; i++)
@@ -241,7 +240,7 @@ void Position::init() //it initialize the position globals, and make a clear boa
 void Position::initGlobals()
 {
 	int res, i_help, j_help, k, l;
-	uint32_t i, j, m, dir;
+	uint32_t i, j, dir;
 	uint32_t line, empty, border;
 
 	for (i = 0; i < DIRECTION_NB; i++)
@@ -595,7 +594,7 @@ void Position::initGlobals()
 			j = i;
 			for (k = 0; k < 3; k++)
 			{
-				if ((j + DIRECTION_SIGNED(dir) < TSIZE) && ((j + DIRECTION_SIGNED(dir)) >= 0) && !((j % BOARDS == 0 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == BOARDS - 1) || (j % BOARDS == BOARDS - 1 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == 0)))
+				if ((j + DIRECTION_SIGNED(dir) < TSIZE) && (int(DIRECTION_SIGNED(dir) + j) >= 0) && !((j % BOARDS == 0 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == BOARDS - 1) || (j % BOARDS == BOARDS - 1 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == 0)))
 				{
 					neighbourhood_3[i][dir % 4].t[(j + DIRECTION_SIGNED(dir)) >> 6] |= (1ULL << ((j + DIRECTION_SIGNED(dir)) - (((j + DIRECTION_SIGNED(dir)) >> 6) << 6)));
 					j += DIRECTION_SIGNED(dir);
@@ -608,7 +607,7 @@ void Position::initGlobals()
 			j = i;
 			for (k = 0; k < 4; k++)
 			{
-				if ((j + DIRECTION_SIGNED(dir) < TSIZE) && ((j + DIRECTION_SIGNED(dir)) >= 0) && !((j % BOARDS == 0 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == BOARDS - 1) || (j % BOARDS == BOARDS - 1 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == 0)))
+				if ((j + DIRECTION_SIGNED(dir) < TSIZE) && (int(j + DIRECTION_SIGNED(dir)) >= 0) && !((j % BOARDS == 0 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == BOARDS - 1) || (j % BOARDS == BOARDS - 1 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == 0)))
 				{
 					neighbourhood_4[i][dir % 4].t[(j + DIRECTION_SIGNED(dir)) >> 6] |= (1ULL << ((j + DIRECTION_SIGNED(dir)) - (((j + DIRECTION_SIGNED(dir)) >> 6) << 6)));
 					j += DIRECTION_SIGNED(dir);
@@ -621,7 +620,7 @@ void Position::initGlobals()
 			j = i;
 			for (k = 0; k < 5; k++)
 			{
-				if ((j + DIRECTION_SIGNED(dir) < TSIZE) && ((j + DIRECTION_SIGNED(dir)) >= 0) && !((j % BOARDS == 0 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == BOARDS - 1) || ((j % BOARDS) == BOARDS - 1 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == 0)))
+				if ((j + DIRECTION_SIGNED(dir) < TSIZE) && (int(j + DIRECTION_SIGNED(dir)) >= 0) && !((j % BOARDS == 0 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == BOARDS - 1) || ((j % BOARDS) == BOARDS - 1 && ((j + DIRECTION_SIGNED(dir)) % BOARDS) == 0)))
 				{
 					neighbourhood_5[i][dir % 4].t[(j + DIRECTION_SIGNED(dir)) >> 6] |= (1ULL << ((j + DIRECTION_SIGNED(dir)) - (((j + DIRECTION_SIGNED(dir)) >> 6) << 6)));
 					j += DIRECTION_SIGNED(dir);
@@ -714,7 +713,7 @@ void Position::print_board()
 
 void Position::print_board_extended()
 {
-	int i, j, k, dir, sq;
+	int i, j, dir, sq;
 	table loop;
 	for (i = 0; i < TSIZE; i++)
 	{
@@ -812,16 +811,12 @@ int Position::do_move(int move, StateInfo& newSt)
 
 int Position::update_attack(int move, StateInfo& newSt)
 {
-	int i, j, k;
 	int move_x, move_y;
 	int dir;
-	int sq;
-	uint32_t border, empty;
+	uint32_t border;
 	uint32_t line[DIRECTION_NB];
 	uint32_t what_to_do;
 	int index, pre_index;
-	table loop;
-	
 
 	assert (move >= 0 && move < TSIZE);
 	assert (((square[turn_glob].t[move >> 6] & (1ULL << (move - ((move >> 6) << 6)))) == 0) && ((square[turn_glob ^ 1].t[move >> 6] & (1ULL << (move - ((move >> 6) << 6)))) == 0));
@@ -873,7 +868,7 @@ int Position::update_attack(int move, StateInfo& newSt)
 			}
 			what_to_do = what_to_do_global[code_enviroment(line[dir], border, index)];
 		
-			if (pre_index = (what_to_do & 15))
+			if ((pre_index = (what_to_do & 15)))
 			{
 				if (pre_index > 8)
 				{
@@ -894,7 +889,7 @@ int Position::update_attack(int move, StateInfo& newSt)
 					st -> threat[turn_glob][((what_to_do & (3 << 16)) >> 16)][dir].t[((move + (pre_index * DIRECTION_SUREWIN(dir))) >> 6)] |= (1ULL << ((move + (pre_index * DIRECTION_SUREWIN(dir))) - (((move + (pre_index * DIRECTION_SUREWIN(dir))) >> 6) << 6)));
 				}
 			}
-			if (pre_index = ((what_to_do & (15 << 4)) >> 4))
+			if ((pre_index = ((what_to_do & (15 << 4)) >> 4)))
 			{
 				if (pre_index > 8)
 				{
@@ -915,7 +910,7 @@ int Position::update_attack(int move, StateInfo& newSt)
 					st -> threat[turn_glob][((what_to_do & (3 << 18)) >> 18)][dir].t[((move + (pre_index * DIRECTION_SUREWIN(dir))) >> 6)] |= (1ULL << ((move + (pre_index * DIRECTION_SUREWIN(dir))) - (((move + (pre_index * DIRECTION_SUREWIN(dir))) >> 6) << 6)));
 				}					
 			}
-			if (pre_index = ((what_to_do & (15 << 8)) >> 8))
+			if ((pre_index = ((what_to_do & (15 << 8)) >> 8)))
 			{
 				if (pre_index > 8)
 				{
@@ -936,7 +931,7 @@ int Position::update_attack(int move, StateInfo& newSt)
 					st -> threat[turn_glob][((what_to_do & (3 << 20)) >> 20)][dir].t[((move + (pre_index * DIRECTION_SUREWIN(dir))) >> 6)] |= (1ULL << ((move + (pre_index * DIRECTION_SUREWIN(dir))) - (((move + (pre_index * DIRECTION_SUREWIN(dir))) >> 6) << 6)));
 				}					
 			}
-			if (pre_index = ((what_to_do & (15 << 12)) >> 12))
+			if ((pre_index = ((what_to_do & (15 << 12)) >> 12)))
 			{
 				if (pre_index > 8)
 				{
@@ -1667,7 +1662,7 @@ int Position::is_there_a_free_four (uint32_t line, uint32_t border, int index, i
 	return 0;
 }
 
-int Position::is_there_a_five (uint32_t line, uint32_t border, int index, int rule)
+int Position::is_there_a_five (uint32_t line, uint32_t /*border*/, int index, int rule)
 {	
 	if (rule)
 	{
@@ -2070,8 +2065,7 @@ table Position::why_win(int move)
 {
 	int move_x, move_y;
 	int dir;
-	int sq;
-	uint32_t border, empty;
+	uint32_t border;
 	uint32_t line[DIRECTION_NB];
 	uint32_t what_to_do;
 	int index, pre_index;
@@ -2117,7 +2111,7 @@ table Position::why_win(int move)
 			}
 			what_to_do = what_to_do_global[code_enviroment(line[dir], border, index)];
 		
-			if (pre_index = (what_to_do & 15))
+			if ((pre_index = (what_to_do & 15)))
 			{
 				if (pre_index > 8)
 				{
@@ -2127,13 +2121,13 @@ table Position::why_win(int move)
 				{
 					if ((!ret))
 					{
-						EXPAND(ret,  move + (pre_index * DIRECTION_SUREWIN(dir)));
+						EXPAND(ret,  (move + (pre_index * DIRECTION_SUREWIN(dir))));
 						return ret;
 					}
-					EXPAND(ret,  move + (pre_index * DIRECTION_SUREWIN(dir)));
+					EXPAND(ret,  (move + (pre_index * DIRECTION_SUREWIN(dir))));
 				}
 			}
-			if (pre_index = ((what_to_do & (15 << 4)) >> 4))
+			if ((pre_index = ((what_to_do & (15 << 4)) >> 4)))
 			{
 				if (pre_index > 8)
 				{
@@ -2143,13 +2137,13 @@ table Position::why_win(int move)
 				{
 					if ((!ret))
 					{
-						EXPAND(ret,  move + (pre_index * DIRECTION_SUREWIN(dir)));
+						EXPAND(ret, (move + (pre_index * DIRECTION_SUREWIN(dir))));
 						return ret;
 					}
-					EXPAND(ret,  move + (pre_index * DIRECTION_SUREWIN(dir)));
+					EXPAND(ret,  (move + (pre_index * DIRECTION_SUREWIN(dir))));
 				}					
 			}
-			if (pre_index = ((what_to_do & (15 << 8)) >> 8))
+			if ((pre_index = ((what_to_do & (15 << 8)) >> 8)))
 			{
 				if (pre_index > 8)
 				{
@@ -2159,13 +2153,13 @@ table Position::why_win(int move)
 				{
 					if ((!ret))
 					{
-						EXPAND(ret,  move + (pre_index * DIRECTION_SUREWIN(dir)));
+						EXPAND(ret, (move + (pre_index * DIRECTION_SUREWIN(dir))));
 						return ret;
 					}
-					EXPAND(ret,  move + (pre_index * DIRECTION_SUREWIN(dir)));
+					EXPAND(ret, (move + (pre_index * DIRECTION_SUREWIN(dir))));
 				}				
 			}
-			if (pre_index = ((what_to_do & (15 << 12)) >> 12))
+			if ((pre_index = ((what_to_do & (15 << 12)) >> 12)))
 			{
 				if (pre_index > 8)
 				{
@@ -2175,10 +2169,10 @@ table Position::why_win(int move)
 				{
 					if ((!ret))
 					{
-						EXPAND(ret,  move + (pre_index * DIRECTION_SUREWIN(dir)));
+						EXPAND(ret, (move + (pre_index * DIRECTION_SUREWIN(dir))));
 						return ret;
 					}
-					EXPAND(ret,  move + (pre_index * DIRECTION_SUREWIN(dir)));
+					EXPAND(ret, (move + (pre_index * DIRECTION_SUREWIN(dir))));
 				}				
 			}						
 		}
@@ -2190,8 +2184,7 @@ int Position::five_threat_dir(int move)
 {
 	int move_x, move_y;
 	int dir;
-	int sq;
-	uint32_t border, empty;
+	uint32_t border;
 	uint32_t line[DIRECTION_NB];
 	uint32_t what_to_do;
 	int index, pre_index;
@@ -2236,7 +2229,7 @@ int Position::five_threat_dir(int move)
 			}
 			what_to_do = what_to_do_global[code_enviroment(line[dir], border, index)];
 		
-			if (pre_index = (what_to_do & 15))
+			if ((pre_index = (what_to_do & 15)))
 			{
 				if (pre_index > 8)
 				{
@@ -2248,7 +2241,7 @@ int Position::five_threat_dir(int move)
 					return dir;
 				}
 			}
-			if (pre_index = ((what_to_do & (15 << 4)) >> 4))
+			if ((pre_index = ((what_to_do & (15 << 4)) >> 4)))
 			{
 				if (pre_index > 8)
 				{
@@ -2260,7 +2253,7 @@ int Position::five_threat_dir(int move)
 					return dir;
 				}					
 			}
-			if (pre_index = ((what_to_do & (15 << 8)) >> 8))
+			if ((pre_index = ((what_to_do & (15 << 8)) >> 8)))
 			{
 				if (pre_index > 8)
 				{
@@ -2272,7 +2265,7 @@ int Position::five_threat_dir(int move)
 					return dir;
 				}				
 			}
-			if (pre_index = ((what_to_do & (15 << 12)) >> 12))
+			if ((pre_index = ((what_to_do & (15 << 12)) >> 12)))
 			{
 				if (pre_index > 8)
 				{
