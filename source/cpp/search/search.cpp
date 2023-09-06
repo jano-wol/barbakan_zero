@@ -6,6 +6,7 @@
 #include "../search/search.h"
 
 #include <algorithm>
+#include <iostream>
 #include <numeric>
 
 #include "../core/fancymath.h"
@@ -2266,8 +2267,7 @@ int16_t SearchThread::surewin_tt_probe(Position * p, uint16_t * best, uint8_t * 
 	{ 
 		if ((phashe->square[0] != p-> square[0]) || (phashe->square[1] != p-> square[1]) || (p -> turn_glob != phashe -> turn))
 		{
-			printf("TT keey coll\n");
-			getchar();
+			std::cerr << "TT keey coll\n";
 		}
 		*best = phashe->bestmove;
 		*easy = phashe->easy;

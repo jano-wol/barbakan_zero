@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 #include "tt.h"
 
 StateInfo st_tt[BOARDS*BOARDS];
@@ -50,8 +51,7 @@ int16_t surewin_tt_probe(Position * p, uint16_t * best, uint8_t * depth, bool * 
 	{ 
 		if ((phashe->square[0] != p-> square[0]) || (phashe->square[1] != p-> square[1]) || (p -> turn_glob != phashe -> turn))
 		{
-			printf("TT keey coll\n");
-			getchar();
+			std::cerr << "TT keey coll\n";
 		}
 		*best = phashe->bestmove;
 		*easy = phashe->easy;
@@ -156,8 +156,7 @@ void tt_probe(Position * p, uint16_t * bestmove, int16_t * val, uint8_t * flag, 
 	{
 		if ((phashe->square[0] != p-> square[0]) || (phashe->square[1] != p-> square[1]) || (p -> turn_glob != phashe -> turn))
 		{
-			printf("TT keey coll\n");
-			getchar();
+			std::cerr << "TT keey coll\n";
 		}
 		*bestmove = phashe -> bestmove;
 		*val = phashe -> val;
