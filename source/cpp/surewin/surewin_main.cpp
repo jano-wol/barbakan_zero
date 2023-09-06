@@ -34,7 +34,7 @@ int surewin_main(int argc, char *argv[])
 	t.null();
 	t = (~t);	
 	
-	sprintf(st_mainr, "/home/jano/Programs/Gomoku/Games/%s", argv[1]);
+	sprintf(st_mainr, "games_path_here", argv[1]);
 	if ((f=fopen(st_mainr, "r"))!=0)
 	{
 		if (fgets(line, 256, f) == NULL) // no need for the first_main line
