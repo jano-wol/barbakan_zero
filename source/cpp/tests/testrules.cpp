@@ -4,8 +4,8 @@
 using namespace std;
 using namespace TestCommon;
 
-static void checkKoHashConsistency(BoardHistory& hist, Board& board, Player nextPla) {
-  /*
+/*static void checkKoHashConsistency(BoardHistory& hist, Board& board, Player nextPla) {
+
   testAssert(hist.koHashHistory.size() > 0);
   Hash128 expected = board.pos_hash;
   if(hist.encorePhase > 0) {
@@ -22,11 +22,10 @@ static void checkKoHashConsistency(BoardHistory& hist, Board& board, Player next
     expected ^= Board::ZOBRIST_PLAYER_HASH[nextPla];
   }
   testAssert(expected == hist.koHashHistory[hist.koHashHistory.size()-1]);
-  */
-}
+}*/
 
-static void makeMoveAssertLegal(BoardHistory& hist, Board& board, Loc loc, Player pla, int line, bool preventEncore) {
-  /*
+/*static void makeMoveAssertLegal(BoardHistory& hist, Board& board, Loc loc, Player pla, int line, bool preventEncore) {
+
   bool phaseWouldEnd = hist.passWouldEndPhase(board,pla);
   int oldPhase = hist.encorePhase;
 
@@ -42,18 +41,17 @@ static void makeMoveAssertLegal(BoardHistory& hist, Board& board, Loc loc, Playe
     if((phaseWouldEnd && !preventEncore) != (newPhase != oldPhase || hist.isGameFinished))
       throw StringError("hist.passWouldEndPhase returned different answer than what actually happened after a pass");
   }
-  */
-}
+}*/
 
 
-static void makeMoveAssertLegal(BoardHistory& hist, Board& board, Loc loc, Player pla, int line) {
-  /*
+/*static void makeMoveAssertLegal(BoardHistory& hist, Board& board, Loc loc, Player pla, int line) {
+
   makeMoveAssertLegal(hist,board,loc,pla,line,false,NULL);
-  */
-}
 
-static double finalScoreIfGameEndedNow(const BoardHistory& baseHist, const Board& baseBoard) {
-  /*
+}*/
+
+/*static double finalScoreIfGameEndedNow(const BoardHistory& baseHist, const Board& baseBoard) {
+
   Player pla = P_BLACK;
   Board board(baseBoard);
   BoardHistory hist(baseHist);
@@ -74,9 +72,9 @@ static double finalScoreIfGameEndedNow(const BoardHistory& baseHist, const Board
   testAssert(hist2.finalWhiteMinusBlackScore == score);
 
   return score;
-   */
+
   return 0.0;
-}
+}*/
 
 void Tests::runRulesTests() {
   /*

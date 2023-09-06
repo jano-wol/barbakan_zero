@@ -651,7 +651,8 @@ MatchPairer::MatchPairer(
   bool forGateKeeper,
   const vector<bool>& exclude
 )
-  :numBots(nBots),
+  :numGamesStartedSoFar(0),
+   numBots(nBots),
    botNames(bNames),
    nnEvals(nEvals),
    baseParamss(bParamss),
@@ -663,7 +664,6 @@ MatchPairer::MatchPairer(
    rand(),
    matchRepFactor(1),
    repsOfLastMatchup(0),
-   numGamesStartedSoFar(0),
    numGamesTotal(),
    logGamesEvery(),
    getMatchupMutex()
@@ -710,7 +710,7 @@ int64_t MatchPairer::getNumGamesTotalToGenerate() const {
 }
 
 bool MatchPairer::getMatchup(
-  BotSpec& botSpecB, BotSpec& botSpecW, Logger& logger, bool forGateKeeper, int gameNumber
+  BotSpec& botSpecB, BotSpec& botSpecW, Logger& logger, bool forGateKeeper, int /*gameNumber*/
 )
 {
   std::lock_guard<std::mutex> lock(getMatchupMutex);
@@ -1131,7 +1131,7 @@ static Loc getGameInitializationMove(
 //and add entropy
 static void initializeGameUsingPolicy(
   Search* botB, Search* botW, Board& board, BoardHistory& hist, Player& pla,
-  Rand& gameRand, bool doEndGameIfAllPassAlive,
+  Rand& gameRand, bool /*doEndGameIfAllPassAlive*/,
   double proportionOfBoardArea, double temperature
 ) {
   NNResultBuf buf;
@@ -2033,11 +2033,8 @@ FinishedGameData* Play::runGame(
 static void replayGameUpToMove(const FinishedGameData* finishedGameData, int moveIdx, Rules rules, Board& board, BoardHistory& hist, Player& pla) {
   board = finishedGameData->startHist.initialBoard;
   pla = finishedGameData->startHist.initialPla;
+  hist.clear(board,pla,rules);
 
-  if(rules.scoringRule == Rules::SCORING_AREA)
-    hist.clear(board,pla,rules);
-  else
-    hist.clear(board,pla,rules);
 
   //Make sure it's prior to the last move
   if(finishedGameData->endHist.moveHistory.size() <= 0)

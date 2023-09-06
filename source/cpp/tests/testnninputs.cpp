@@ -87,15 +87,15 @@ static void printNNInputGlobal(ostream& out, int inputsVersion, T* row, int c) {
   out << ": " << row[c] << endl;
 }
 
-static string getAndClear(ostringstream& out) {
+/*static string getAndClear(ostringstream& out) {
   string result = out.str();
   out.str("");
   out.clear();
   return result;
-}
+}*/
 
-static double finalScoreIfGameEndedNow(const BoardHistory& baseHist, const Board& baseBoard) {
-  /*
+/*static double finalScoreIfGameEndedNow(const BoardHistory& baseHist, const Board& baseBoard) {
+
   Player pla = P_BLACK;
   Board board(baseBoard);
   BoardHistory hist(baseHist);
@@ -108,9 +108,9 @@ static double finalScoreIfGameEndedNow(const BoardHistory& baseHist, const Board
 
   double score = 0;
   hist.endAndScoreGameNow(board);
-  //testAssert(hist.finalWhiteMinusBlackScore == score);*/
+  //testAssert(hist.finalWhiteMinusBlackScore == score);
   return 0.0;
-}
+}*/
 
 
 //==================================================================================================================

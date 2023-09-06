@@ -42,7 +42,7 @@ int PlayUtils::chooseRandomLegalMoves(const Board& board, const BoardHistory& hi
 
 
 Loc PlayUtils::chooseRandomPolicyMove(
-  const NNOutput* nnOutput, const Board& board, const BoardHistory& hist, Player pla, Rand& gameRand, double temperature, bool allowPass, Loc banMove
+  const NNOutput* nnOutput, const Board& board, const BoardHistory& hist, Player pla, Rand& gameRand, double temperature, bool /*allowPass*/, Loc banMove
 ) {
   const float* policyProbs = nnOutput->policyProbs;
   int nnXLen = nnOutput->nnXLen;
@@ -222,8 +222,6 @@ static std::pair<double,double> evalKomi(
   if(iter != scoreWLCache.end())
     return iter->second;
 
-  float oldKomi = hist.rules.komi;
-
   ReportedSearchValues values0 = PlayUtils::getWhiteScoreValues(botB, board, hist, pla, numVisits, logger, otherGameProps);
   double lead = values0.lead;
   double winLoss = values0.winLossValue;
@@ -252,8 +250,6 @@ static double getNaiveEvenKomiHelper(
   const OtherGameProperties& otherGameProps,
   bool looseClipping
 ) {
-  float oldKomi = hist.rules.komi;
-
   //A few times iterate based on expected score a few times to hopefully get a value close to fair
   double lastShift = 0.0;
   double lastWinLoss = 0.0;
@@ -270,7 +266,6 @@ static double getNaiveEvenKomiHelper(
          (lastWinLoss > 0 && winLoss > lastWinLoss + 0.1) ||
          (lastWinLoss < 0 && winLoss < lastWinLoss - 0.1)
       ) {
-        float fairKomi = PlayUtils::roundAndClipKomi(hist.rules.komi - lastShift * 0.5f, board, looseClipping);
         // cout << "STOP" << endl;
         // cout << lastLead << " " << lead << " " << lastWinLoss << " " << winLoss << endl;
         break;
@@ -293,9 +288,6 @@ static double getNaiveEvenKomiHelper(
     //If the score and winrate would like to move in opposite directions, quit immediately.
     if((shift > 0 && winLoss > 0) || (shift < 0 && lead < 0))
       break;
-
-    // cout << "Shifting by " << shift << endl;
-    float fairKomi = PlayUtils::roundAndClipKomi(hist.rules.komi + shift, board, looseClipping);
 
     //After a small shift, break out to the binary search.
     if(abs(shift) < 16.0)
@@ -557,21 +549,19 @@ vector<bool> PlayUtils::computeAnticipatedStatusesSimple(
 }
 
 vector<bool> PlayUtils::computeAnticipatedStatusesWithOwnership(
-  Search* bot,
+  Search* /*bot*/,
   const Board& board,
   const BoardHistory& hist,
-  Player pla,
-  int64_t numVisits,
-  Logger& logger
+  Player /*pla*/,
+  int64_t /*numVisits*/,
+  Logger& /*logger*/
 ) {
   if(hist.isGameFinished)
     return computeAnticipatedStatusesSimple(board,hist);
 
   vector<bool> isAlive(Board::MAX_ARR_SIZE,false);
-  bool solved[Board::MAX_ARR_SIZE];
   for(int i = 0; i<Board::MAX_ARR_SIZE; i++) {
     isAlive[i] = false;
-    solved[i] = false;
   }
   return isAlive;
 }
