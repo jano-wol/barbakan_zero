@@ -20,12 +20,10 @@ To check that you have a working repo for development run the followings from th
 (last message should be 'All tests passed')  
 
 # train NN model
-After 
-./source/scripts/build.sh release  
-nn model train can be started by:
+After the build step is ready nn model train can be started by:  
 ./source/scripts/train.sh release train_id
 
-If tran_id is a new id, then a new training process will be started. Otherwise, the training process corresponding to the already existing id will be continued. The output folder of the training process is  
+If train_id is a new id, then a new training process will be started. Otherwise, the training process corresponding to the already existing id will be continued. The output folder of the training process is  
 ./data/train/train_id
 This is not cleaned by the configure step.
 
