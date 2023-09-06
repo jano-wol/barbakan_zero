@@ -272,9 +272,6 @@ void Search::clearSearch() {
 }
 
 bool Search::isLegalTolerant(Loc moveLoc, Player movePla) const {
-  //Tolerate sgf files or GTP reporting suicide moves, even if somehow the rules are set to disallow them.
-  bool multiStoneSuicideLegal = true;
-
   //If we somehow have the same player making multiple moves in a row (possible in GTP or an sgf file),
   //clear the ko loc - the simple ko loc of a player should not prohibit the opponent playing there!
   if(movePla != rootPla) {
@@ -294,7 +291,7 @@ bool Search::makeMove(Loc moveLoc, Player movePla) {
   return makeMove(moveLoc,movePla,false);
 }
 
-bool Search::makeMove(Loc moveLoc, Player movePla, bool preventEncore) {
+bool Search::makeMove(Loc moveLoc, Player movePla, bool /*preventEncore*/) {
   if(!isLegalTolerant(moveLoc,movePla))
     return false;
 
@@ -357,19 +354,13 @@ bool Search::makeMove(Loc moveLoc, Player movePla, bool preventEncore) {
 }
 
 
-double Search::getScoreUtility(double scoreMeanSum, double scoreMeanSqSum, double weightSum) const {
-  double scoreMean = scoreMeanSum / weightSum;
-  double scoreMeanSq = scoreMeanSqSum / weightSum;
-  double scoreStdev = getScoreStdev(scoreMean, scoreMeanSq);
+double Search::getScoreUtility(double /*scoreMeanSum*/, double /*scoreMeanSqSum*/, double /*weightSum*/) const {
   double staticScoreValue = 0.0;
   double dynamicScoreValue = 0.0;
   return staticScoreValue * searchParams.staticScoreUtilityFactor + dynamicScoreValue * searchParams.dynamicScoreUtilityFactor;
 }
 
-double Search::getScoreUtilityDiff(double scoreMeanSum, double scoreMeanSqSum, double weightSum, double delta) const {
-  double scoreMean = scoreMeanSum / weightSum;
-  double scoreMeanSq = scoreMeanSqSum / weightSum;
-  double scoreStdev = getScoreStdev(scoreMean, scoreMeanSq);
+double Search::getScoreUtilityDiff(double /*scoreMeanSum*/, double /*scoreMeanSqSum*/, double /*weightSum*/, double /*delta*/) const {
   double staticScoreValueDiff = 0.0;
   double dynamicScoreValueDiff = 0.0;
   return staticScoreValueDiff * searchParams.staticScoreUtilityFactor + dynamicScoreValueDiff * searchParams.dynamicScoreUtilityFactor;
@@ -831,7 +822,7 @@ void Search::beginSearch(bool pondering) {
 
 //Recursively walk over part of the tree that we are about to delete and remove its contribution to the value bias in the table
 //Assumes we aren't doing any multithreadingy stuff, so doesn't bother with locks.
-void Search::recursivelyRemoveSubtreeValueBiasBeforeDeleteSynchronous(SearchNode* node) {
+void Search::recursivelyRemoveSubtreeValueBiasBeforeDeleteSynchronous(SearchNode* /*node*/) {
     return;
 }
 
@@ -869,7 +860,6 @@ void Search::recursivelyRecomputeStats(SearchNode& node, SearchThread& thread, b
     double scoreMeanSum = node.stats.scoreMeanSum;
     double scoreMeanSqSum = node.stats.scoreMeanSqSum;
     double weightSum = node.stats.weightSum;
-    int64_t numVisits = node.stats.visits;
     node.statsLock.clear(std::memory_order_release);
 
     //It's possible that this node has 0 weight in the case where it's the root node
@@ -902,7 +892,6 @@ void Search::computeRootNNEvaluation(NNResultBuf& nnResultBuf, bool includeOwner
   Board board = rootBoard;
   const BoardHistory& hist = rootHistory;
   Player pla = rootPla;
-  bool skipCache = false;
   // bool isRoot = true;
   MiscNNInputParams nnInputParams;
   nnInputParams.drawEquivalentWinsForWhite = searchParams.drawEquivalentWinsForWhite;
@@ -920,11 +909,6 @@ void Search::computeRootNNEvaluation(NNResultBuf& nnResultBuf, bool includeOwner
 
 void Search::computeRootValues() {
   //rootSafeArea is strictly pass-alive groups and strictly safe territory.
-  bool nonPassAliveStones = false;
-  bool safeBigTerritories = false;
-  bool unsafeBigTerritories = false;
-  bool isMultiStoneSuicideLegal = rootHistory.rules.multiStoneSuicideLegal;
-
   //Figure out how to set recentScoreCenter
   {
     bool foundExpectedScoreFromTree = false;
@@ -1118,6 +1102,7 @@ void Search::maybeAddPolicyNoiseAndTempAlreadyLocked(SearchThread& thread, Searc
 
 bool Search::isAllowedRootMove(Loc moveLoc) const {
   assert(rootBoard.isOnBoard(moveLoc));
+  moveLoc += 0;
 
   //A bad situation that can happen that unnecessarily prolongs training games is where one player
   //repeatedly passes and the other side repeatedly fills the opponent's space and/or suicides over and over.
@@ -1250,7 +1235,7 @@ double Search::getExploreSelectionValueInverse(
 
 
 //Parent must be locked
-double Search::getEndingWhiteScoreBonus(const SearchNode& parent, const SearchNode* child) const {
+double Search::getEndingWhiteScoreBonus(const SearchNode& /*parent*/, const SearchNode* /*child*/) const {
     return 0.0;
 }
 
@@ -1276,9 +1261,9 @@ static void maybeApplyWideRootNoise(
   }
 }
 
-static double square(double x) {
+/*static double square(double x) {
   return x * x;
-}
+}*/
 
 //Parent must be locked
 double Search::getExploreSelectionValue(
@@ -1740,7 +1725,7 @@ void Search::runSinglePlayout(SearchThread& thread, double upperBoundVisitsLeft)
   thread.history = rootHistory;
 }
 
-void Search::addLeafValue(SearchNode& node, double winValue, double noResultValue, double scoreMean, double scoreMeanSq, double lead, int32_t virtualLossesToSubtract, bool isTerminal) {
+void Search::addLeafValue(SearchNode& node, double winValue, double noResultValue, double scoreMean, double scoreMeanSq, double lead, int32_t virtualLossesToSubtract, bool /*isTerminal*/) {
   double utility =
     getResultUtility(winValue, noResultValue)
     + getScoreUtility(scoreMean, scoreMeanSq, 1.0);
@@ -1775,7 +1760,7 @@ void Search::maybeRecomputeExistingNNOutput(
 //Assumes node is locked
 void Search::initNodeNNOutput(
   SearchThread& thread, SearchNode& node,
-  bool isRoot, bool skipCache, int32_t virtualLossesToSubtract, bool isReInit
+  bool isRoot, bool /*skipCache*/, int32_t virtualLossesToSubtract, bool isReInit
 ) {
   bool includeOwnerMap = isRoot || alwaysIncludeOwnerMap;
   MiscNNInputParams nnInputParams;
@@ -1819,7 +1804,6 @@ void Search::initNodeNNOutput(
     for(int i = 0; i<searchParams.rootNumSymmetriesToSample; i++) {
       std::swap(symmetryIndexes[i], symmetryIndexes[thread.rand.nextInt(i,NNInputs::NUM_SYMMETRY_COMBINATIONS-1)]);
       nnInputParams.symmetry = symmetryIndexes[i];
-      bool skipCacheThisIteration = true; //Skip cache since there's no guarantee which symmetry is in the cache
       nnEvaluator->evaluate(
         thread.board, thread.history, thread.pla,
         nnInputParams,
@@ -2081,14 +2065,15 @@ int SearchThread::surewin_attack (Position * p, int8_t depth_left, uint8_t ply, 
 	// is there legal move
 	if (!(!pick.legal))
 	{
-		if (!(~(p->square[0] | p->square[1]))) // somebody win
-		{
-			return 0;
-		}
-		else //draw
-		{
-			return 0;
-		}
+//		if (!(~(p->square[0] | p->square[1]))) // somebody win
+//		{
+//			return 0;
+//		}
+//		else //draw
+//		{
+//			return 0;
+//		}
+        return 0;
 	}
 	
 	//check tt
@@ -2170,7 +2155,6 @@ int SearchThread::surewin_attack (Position * p, int8_t depth_left, uint8_t ply, 
 int SearchThread::surewin_defense (Position * p, int8_t depth_left, uint8_t ply, table attackline, bool easy)
 {
 	int sq;
-	int new_depth;
 	table loop;	
 	
 	if (p->nodes > 5000)
@@ -2297,41 +2281,41 @@ void SearchThread::surewin_tt_kill()
 	memset(surewin_tt, 0, (surewin_tt_size+1)*sizeof(struct surewin_tt_entry));
 }
 
-void SearchThread::initSurewinRoot(Board& board, int pla)
+void SearchThread::initSurewinRoot(Board& boardLoc, int plaLoc)
 {
-  root.square[0].t[0] = board.threatHandler.square[0].t[0];
-  root.square[0].t[1] = board.threatHandler.square[0].t[1];
-  root.square[0].t[2] = board.threatHandler.square[0].t[2];
-  root.square[0].t[3] = board.threatHandler.square[0].t[3];
-  root.square[0].t[4] = board.threatHandler.square[0].t[4];
-  root.square[0].t[5] = board.threatHandler.square[0].t[5];
-  root.square[0].t[6] = board.threatHandler.square[0].t[6];
-  root.square[0].t[7] = board.threatHandler.square[0].t[7];
-  root.square[1].t[0] = board.threatHandler.square[1].t[0];
-  root.square[1].t[1] = board.threatHandler.square[1].t[1];
-  root.square[1].t[2] = board.threatHandler.square[1].t[2];
-  root.square[1].t[3] = board.threatHandler.square[1].t[3];
-  root.square[1].t[4] = board.threatHandler.square[1].t[4];
-  root.square[1].t[5] = board.threatHandler.square[1].t[5];
-  root.square[1].t[6] = board.threatHandler.square[1].t[6];
-  root.square[1].t[7] = board.threatHandler.square[1].t[7];
+  root.square[0].t[0] = boardLoc.threatHandler.square[0].t[0];
+  root.square[0].t[1] = boardLoc.threatHandler.square[0].t[1];
+  root.square[0].t[2] = boardLoc.threatHandler.square[0].t[2];
+  root.square[0].t[3] = boardLoc.threatHandler.square[0].t[3];
+  root.square[0].t[4] = boardLoc.threatHandler.square[0].t[4];
+  root.square[0].t[5] = boardLoc.threatHandler.square[0].t[5];
+  root.square[0].t[6] = boardLoc.threatHandler.square[0].t[6];
+  root.square[0].t[7] = boardLoc.threatHandler.square[0].t[7];
+  root.square[1].t[0] = boardLoc.threatHandler.square[1].t[0];
+  root.square[1].t[1] = boardLoc.threatHandler.square[1].t[1];
+  root.square[1].t[2] = boardLoc.threatHandler.square[1].t[2];
+  root.square[1].t[3] = boardLoc.threatHandler.square[1].t[3];
+  root.square[1].t[4] = boardLoc.threatHandler.square[1].t[4];
+  root.square[1].t[5] = boardLoc.threatHandler.square[1].t[5];
+  root.square[1].t[6] = boardLoc.threatHandler.square[1].t[6];
+  root.square[1].t[7] = boardLoc.threatHandler.square[1].t[7];
   for (int i = 0; i < 2; i++)
   {
   	for (int j = 0; j < 4; j++)
   	{
   		for (int k = 0; k < BOARDS + BOARDS - 1; k++)
   		{
-  			root.linear_bit[i][j][k] = board.threatHandler.linear_bit[i][j][k]; 
+  			root.linear_bit[i][j][k] = boardLoc.threatHandler.linear_bit[i][j][k];
   		}
   	}
   }
 
-  root.turn_glob = pla - 1;
-  root.five_threat = board.threatHandler.five_threat;
+  root.turn_glob = plaLoc - 1;
+  root.five_threat = boardLoc.threatHandler.five_threat;
   root.st->key = root.compute_key();
   root.st->previous = NULL;
   root.st->move = END_OBJECT;
-  root.st->five_threat = board.threatHandler.five_threat;
+  root.st->five_threat = boardLoc.threatHandler.five_threat;
 
   for (int i = 0; i < 2; i++)
   {
@@ -2339,14 +2323,14 @@ void SearchThread::initSurewinRoot(Board& board, int pla)
   	{
   		for (int k = 0; k < 4; k++)
   		{
-  			root.st->threat[i][j][k].t[0] = board.threatHandler.threat[i][j][k].t[0]; 
-  			root.st->threat[i][j][k].t[1] = board.threatHandler.threat[i][j][k].t[1]; 
-  			root.st->threat[i][j][k].t[2] = board.threatHandler.threat[i][j][k].t[2]; 
-  			root.st->threat[i][j][k].t[3] = board.threatHandler.threat[i][j][k].t[3]; 
-  			root.st->threat[i][j][k].t[4] = board.threatHandler.threat[i][j][k].t[4]; 
-  			root.st->threat[i][j][k].t[5] = board.threatHandler.threat[i][j][k].t[5]; 
-  			root.st->threat[i][j][k].t[6] = board.threatHandler.threat[i][j][k].t[6]; 
-  			root.st->threat[i][j][k].t[7] = board.threatHandler.threat[i][j][k].t[7];  
+  			root.st->threat[i][j][k].t[0] = boardLoc.threatHandler.threat[i][j][k].t[0];
+  			root.st->threat[i][j][k].t[1] = boardLoc.threatHandler.threat[i][j][k].t[1];
+  			root.st->threat[i][j][k].t[2] = boardLoc.threatHandler.threat[i][j][k].t[2];
+  			root.st->threat[i][j][k].t[3] = boardLoc.threatHandler.threat[i][j][k].t[3];
+  			root.st->threat[i][j][k].t[4] = boardLoc.threatHandler.threat[i][j][k].t[4];
+  			root.st->threat[i][j][k].t[5] = boardLoc.threatHandler.threat[i][j][k].t[5];
+  			root.st->threat[i][j][k].t[6] = boardLoc.threatHandler.threat[i][j][k].t[6];
+  			root.st->threat[i][j][k].t[7] = boardLoc.threatHandler.threat[i][j][k].t[7];
   		}
   	}
   }
@@ -2356,7 +2340,7 @@ void SearchThread::initSurewinRoot(Board& board, int pla)
   root.nodes = 0;
 }
 
-bool SearchThread::surewinSearch(SearchNode& node)
+bool SearchThread::surewinSearch(SearchNode& /*node*/)
 {
   initSurewinRoot(board, pla);
   root.surewin_search++;

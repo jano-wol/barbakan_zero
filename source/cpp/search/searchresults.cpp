@@ -74,8 +74,6 @@ bool Search::getPlaySelectionValuesAlreadyLocked(
   int64_t totalChildVisits = 0;
   int64_t maxChildVisits = 0;
 
-  const bool suppressPass = shouldSuppressPassAlreadyLocked(&node);
-
   //Store up basic visit counts
   for(int i = 0; i<numChildren; i++) {
     SearchNode* child = node.children[i];
@@ -457,8 +455,6 @@ bool Search::shouldSuppressPassAlreadyLocked(const SearchNode* n) const {
   if(rootHistory.rules.scoringRule != Rules::SCORING_TERRITORY)
     return false;
 
-  const SearchNode& node = *n;
-
   return false;
 }
 
@@ -556,19 +552,16 @@ bool Search::getPolicySurpriseAndEntropy(double& surpriseRet, double& searchEntr
   return true;
 }
 
-void Search::printRootOwnershipMap(ostream& out, Player perspective) const {
+void Search::printRootOwnershipMap(ostream& out, Player /*perspective*/) const {
   if(rootNode == NULL)
     return;
   std::mutex& mutex = mutexPool->getMutex(rootNode->lockIdx);
   lock_guard<std::mutex> lock(mutex);
   if(rootNode->nnOutput == nullptr)
     return;
-
-  NNOutput& nnOutput = *(rootNode->nnOutput);
  
   for(int y = 0; y<rootBoard.y_size; y++) {
     for(int x = 0; x<rootBoard.x_size; x++) {
-      int pos = NNPos::xyToPos(x,y,nnOutput.nnXLen);
       out << Global::strprintf("%6.1f ", 0);
     }
     out << endl;
@@ -597,7 +590,7 @@ void Search::printRootPolicyMap(ostream& out) const {
   out << endl;
 }
 
-void Search::printRootEndingScoreValueBonus(ostream& out) const {
+void Search::printRootEndingScoreValueBonus(ostream& /*out*/) const {
     return;
 }
 
@@ -1118,7 +1111,7 @@ vector<double> Search::getAverageTreeOwnership(int64_t minVisits, const SearchNo
   return vec;
 }
 
-double Search::getAverageTreeOwnershipHelper(vector<double>& accum, int64_t minVisits, double desiredWeight, const SearchNode* node) const {
+double Search::getAverageTreeOwnershipHelper(vector<double>& /*accum*/, int64_t /*minVisits*/, double /*desiredWeight*/, const SearchNode* /*node*/) const {
   return 0;
 }
 
