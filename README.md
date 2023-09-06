@@ -31,7 +31,7 @@ NN_ID=b6c96
 in   
 ./source/scripts/train/loop_call.sh  
 
-During the training process hyper constants are determined by following files:  
+The training process hyper constants are determined by following files:  
 ./data/configs/selfplay/gatekeeper_train.cfg.in  
 ./data/configs/selfplay/selfplay_train.cfg.in  
 ./source/scripts/train/synchronous_loop.sh  
