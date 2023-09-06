@@ -5,5 +5,5 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 source "$(dirname "${0}")/build/init.sh"
-source "$(dirname "${0}")/train/train.sh"
+source "$(dirname "${0}")/train/loop_call.sh"
 
