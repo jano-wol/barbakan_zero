@@ -1285,11 +1285,11 @@ skip_not_interesting_not_attackline:
 }
 
 
-void print_picker_regular(Position * p, int limit)
+/*void print_picker_regular(Position * p, int limit)
 {
 	table ret, loop;
 	Picker pick(p);
-	
+
 	ret.null();
 	while (!(loop = pick.picker(p)))
 	{
@@ -1298,10 +1298,10 @@ void print_picker_regular(Position * p, int limit)
 		{
 			break;
 		}
-	}	
+	}
 	print_general(p, ret);
 	return;
-}
+}*/
 
 
 
