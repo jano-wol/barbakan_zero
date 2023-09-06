@@ -9,10 +9,10 @@
 #include "extend.h"
 #include "types.h"
 
-void print_board_root(Position *);
-StateInfo st_main[1000];
+//void print_board_root(Position *);
+//StateInfo st_main[1000];
 
-int surewin_main(int argc, char *argv[])
+/*int surewin_main(int argc, char *argv[])
 {
 	int ply;
 	int move;
@@ -22,7 +22,6 @@ int surewin_main(int argc, char *argv[])
 	table t, s, loop;
 	char st_mainr[256];
 	char line[256];
-	uint16_t best;
 		
 	ply=0;
 	surewin_tt_setsize (10250000); 
@@ -351,4 +350,4 @@ int surewin_main(int argc, char *argv[])
 			}
 		}
 	}	
-}
+}*/
