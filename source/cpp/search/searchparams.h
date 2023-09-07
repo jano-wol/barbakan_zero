@@ -24,6 +24,7 @@ struct SearchParams {
   double policyOptimism; //Interpolate geometrically between raw policy and optimistic policy
   double parentValueWeightFactor; //Scale the parent weight by this much relative to children in mcts
   double valueWeightExponent; //Amount to apply a downweighting of children with very bad values relative to good ones
+  int surewinDepth; // Surewin search depth
 
   //Root parameters
   bool rootNoiseEnabled;

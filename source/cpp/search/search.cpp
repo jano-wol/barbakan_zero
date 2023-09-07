@@ -1776,7 +1776,7 @@ void Search::initNodeNNOutput(
   {   
 	  if (true)
 	  {
-		  if (thread.surewinSearch(node) == true)
+		  if (thread.surewinSearch(node, searchParams.surewinDepth) == true)
 		  {
         if (isRoot)
         {
@@ -2339,8 +2339,12 @@ void SearchThread::initSurewinRoot(Board& boardLoc, int plaLoc)
   root.nodes = 0;
 }
 
-bool SearchThread::surewinSearch(SearchNode& /*node*/)
+bool SearchThread::surewinSearch(SearchNode& /*node*/, int surewinDepth)
 {
+  if (surewinDepth <= 0)
+  {
+    return false;
+  }
   initSurewinRoot(board, pla);
   root.surewin_search++;
   table t;
@@ -2348,7 +2352,7 @@ bool SearchThread::surewinSearch(SearchNode& /*node*/)
   t = (~t);
   for (int i = 1 * PLY_SUREWIN; true; i += (2 * PLY_SUREWIN))
   {
-    if (i >= 21)
+    if (i >= surewinDepth)
     {
       return false;
     }

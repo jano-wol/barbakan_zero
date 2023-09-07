@@ -170,7 +170,7 @@ struct SearchThread {
   void surewin_tt_kill();
   int surewin_attack(Position* p, int8_t depth_left, uint8_t ply, table attackline, bool easy);
   int surewin_defense(Position* p, int8_t depth_left, uint8_t ply, table attackline, bool easy);
-  bool surewinSearch(SearchNode& node);
+  bool surewinSearch(SearchNode& node, int surewinDepth);
   void initSurewinRoot(Board& board, int pla);
 };
 
