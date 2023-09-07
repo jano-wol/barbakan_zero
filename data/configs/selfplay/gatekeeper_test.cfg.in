@@ -12,7 +12,6 @@ startPosesProb = 1.0  # Play this proportion of games starting from SGF position
 startPosesFromSgfDir = @SGF_FOLDER@  # Load SGFs from this dir
 startPosesLoadProb = 1.0  # Only load each position from each SGF with this chance (save memory)
 startPosesTurnWeightLambda = 0  # 0 = equal weight  0.01 = decrease probability by 1% per turn  -0.01 = increase probability by 1% per turn.
-startPosesPolicyInitAreaProp = 0.0  # Same as policyInitAreaProp but for SGF positions
 
 # Match-----------------------------------------------------------------------------------
 
@@ -97,10 +96,7 @@ cpuctExploration = 0.9
 cpuctExplorationLog = 0.4
 fpuReductionMax = 0.2
 rootFpuReductionMax = 0.1
-fpuUseParentAverage = true
 valueWeightExponent = 0.5
-subtreeValueBiasFactor = 0.35
-subtreeValueBiasWeightExponent = 0.8
 
 mutexPoolSize = 64
 numVirtualLossesPerThread = 1
