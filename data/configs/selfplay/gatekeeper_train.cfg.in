@@ -17,7 +17,7 @@ startPosesTurnWeightLambda = 0  # 0 = equal weight  0.01 = decrease probability 
 
 numGameThreads = 48
 maxMovesPerGame = 1600
-numGamesPerGating = 200
+numGamesPerGating = 100
 
 allowResignation = true
 resignThreshold = -0.90
@@ -48,6 +48,7 @@ handicapCompensateKomiProb = 1.0 # Probability of compensating komi to fair duri
 # Search limits-----------------------------------------------------------------------------------
 maxVisits = 700
 numSearchThreads = 1
+surewinDepth = 0
 
 # GPU Settings-------------------------------------------------------------------------------
 

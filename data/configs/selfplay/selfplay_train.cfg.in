@@ -80,6 +80,7 @@ fancyKomiVarying = true  # In non-compensated handicap and fork games, vary komi
 
 numGameThreads = 48
 maxMovesPerGame = 1600
+surewinDepth = 0
 
 # Rules------------------------------------------------------------------------------------
 

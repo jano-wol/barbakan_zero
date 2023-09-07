@@ -22,6 +22,7 @@ SearchParams::SearchParams()
    policyOptimism(0.0),
    parentValueWeightFactor(1.0),
    valueWeightExponent(0.5),
+   surewinDepth(0),
    rootNoiseEnabled(false),
    rootDirichletNoiseTotalConcentration(10.83),
    rootDirichletNoiseWeight(0.25),

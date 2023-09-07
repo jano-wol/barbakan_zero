@@ -31,7 +31,8 @@ NN_ID=b6c96
 in   
 ./source/scripts/train/loop_call.sh  
 
-The training process hyper constants are determined by following files:  
+The training process hyperparameters are determined by the following files:  
 ./data/configs/selfplay/gatekeeper_train.cfg.in  
 ./data/configs/selfplay/selfplay_train.cfg.in  
 ./source/scripts/train/synchronous_loop.sh  
+It is possible that as the training process evolves, some changes are needed in the constants. (e.g. one can try to experiment with NUM_GAMES_PER_CYCLE or surewinDepth etc.)

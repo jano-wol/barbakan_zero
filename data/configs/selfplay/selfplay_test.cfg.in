@@ -111,6 +111,7 @@ noResultStdev = 0.166666666
 
 maxVisits = 600
 numSearchThreads = 1
+surewinDepth = 0
 
 # GPU Settings-------------------------------------------------------------------------------
 
