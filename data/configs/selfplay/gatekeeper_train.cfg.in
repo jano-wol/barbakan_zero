@@ -48,6 +48,7 @@ handicapCompensateKomiProb = 1.0 # Probability of compensating komi to fair duri
 # Search limits-----------------------------------------------------------------------------------
 maxVisits = 700
 numSearchThreads = 1
+surewinDepth = 0
 
 # GPU Settings-------------------------------------------------------------------------------
 

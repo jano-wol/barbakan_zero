@@ -423,8 +423,8 @@ vector<SearchParams> Setup::loadParams(
     else if(cfg.contains("cpuctExplorationBase"))   params.cpuctExplorationBase = cfg.getDouble("cpuctExplorationBase",        10.0, 100000.0);
     else                                            params.cpuctExplorationBase = 500.0;
 
-    if(cfg.contains("surewinDepth"+idxStr)) params.surewinDepth = cfg.getInt("surewinDepth"+idxStr, 1, 4096);
-    else if(cfg.contains("surewinDepth"))   params.surewinDepth = cfg.getInt("surewinDepth",        1, 4096);
+    if(cfg.contains("surewinDepth"+idxStr)) params.surewinDepth = cfg.getInt("surewinDepth"+idxStr, 0, 63);
+    else if(cfg.contains("surewinDepth"))   params.surewinDepth = cfg.getInt("surewinDepth",        0, 63);
     else                                    params.surewinDepth = 0;
 
     if(cfg.contains("fpuReductionMax"+idxStr)) params.fpuReductionMax = cfg.getDouble("fpuReductionMax"+idxStr, 0.0, 2.0);
