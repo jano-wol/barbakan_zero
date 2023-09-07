@@ -17,7 +17,7 @@ startPosesTurnWeightLambda = 0  # 0 = equal weight  0.01 = decrease probability 
 
 numGameThreads = 48
 maxMovesPerGame = 1600
-numGamesPerGating = 200
+numGamesPerGating = 100
 
 allowResignation = true
 resignThreshold = -0.90
