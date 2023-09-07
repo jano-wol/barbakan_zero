@@ -94,7 +94,7 @@ while true
 do
     echo "Gatekeeper"
     time ./barbakan_zero gatekeeper -rejected-models-dir "$BASEDIR"/rejectedmodels -accepted-models-dir "$BASEDIR"/models/ -sgf-output-dir "$BASEDIR"/gatekeepersgf/ -test-models-dir "$BASEDIR"/modelstobetested/ -config "$DATED_ARCHIVE"/gatekeeper.cfg -quit-if-no-nets-to-test | tee -a "$BASEDIR"/gatekeepersgf/stdout.txt
-    if [ -z "$(ls -A "$SELFPLAY_FOLDER/models")" ]; then
+    if [ -z "$(ls -A "$SELFPLAY_FOLDER/models")" ] && [ -z "$(ls -A "$SELFPLAY_FOLDER/rejectedmodels")" ]; then
         if (( $COUNTER > 2 )); then
             echo "Could not create model in $SELFPLAY_FOLDER/models"
             exit 1
