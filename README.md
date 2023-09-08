@@ -35,8 +35,6 @@ showboard
 play B A19  
 play W C1  
 showboard
-or  
-./build/release/bin/barbakan_zero benchmark
 
 # Train NN model
 After the build step is ready nn model train can be started by:  
