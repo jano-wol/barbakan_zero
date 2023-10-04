@@ -10,7 +10,7 @@
 #define END_OBJECT -1
 #define MOVE_NONE (TSIZE)
 
-#define BOARDS 19 // MAX 22 lehet
+#define BOARDS 20 // MAX 22
 #define EMPTY 0
 #define O_TURN 0
 #define X_TURN 1

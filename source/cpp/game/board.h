@@ -11,7 +11,7 @@
 #include "../core/hash.h"
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 19
+#define COMPILE_MAX_BOARD_LEN 20
 #endif
 
 #define MAX_LEN_THREATHANDLER COMPILE_MAX_BOARD_LEN
