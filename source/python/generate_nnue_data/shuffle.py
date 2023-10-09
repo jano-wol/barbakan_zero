@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-# Shuffles npz selfplay data for training, choosing a window size based on a power law.
-# Run 'python shuffle.py --help' for details on how the window size is chosen and how to use this script.
+# Shuffles npz selfplay data for nnue data generation, based on source/python/shuffle.py.
 import sys
 import os
 import argparse
