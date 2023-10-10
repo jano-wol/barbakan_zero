@@ -42,7 +42,16 @@ def print_position(player_stones, waiter_stones):
 
 
 def dump_position(player_stones, waiter_stones):
-    print_position(player_stones, waiter_stones)
+    board_size = player_stones.shape[0]
+    to_dump = []
+    for idx1 in range(board_size):
+        for idx2 in range(board_size):
+            to_dump.append(int(player_stones[idx1][idx2].item()))
+    for idx1 in range(board_size):
+        for idx2 in range(board_size):
+            to_dump.append(int(waiter_stones[idx1][idx2].item()))
+    byte_array = bytearray(to_dump)
+    dump_file.write(byte_array)
 
 
 if __name__ == "__main__":
@@ -70,6 +79,7 @@ if __name__ == "__main__":
     dump_dir_path = os.path.realpath(dump_dir)
     train_files = [os.path.join(shuffle_dir_path, fname) for fname in os.listdir(shuffle_dir_path) if
                    fname.endswith(".npz")]
+    all_rows_dumped = 0
     dump_file = open(dump_dir_path, "wb")
     for [batch, n, num_whole_steps] in read_batches.read_npz_training_data(
             train_files,
@@ -80,10 +90,13 @@ if __name__ == "__main__":
             device=device,
             randomize_symmetries=True
     ):
+        if n % 100 == 0:
+            print(f"steps={n}/{num_whole_steps} all_rows_dumped={all_rows_dumped}")
         curr_batch_size = batch["binaryInputNCHW"].shape[0]
         for idx in range(curr_batch_size):
             p = batch["binaryInputNCHW"][idx][1]
             w = batch["binaryInputNCHW"][idx][2]
             dump_position(p, w)
+            all_rows_dumped += 1
         if n == num_whole_steps - 1:
             break
