@@ -34,15 +34,15 @@ static vector<string> getDefaultConfigPaths(const string& defaultConfigFileName)
 }
 
 static string getDefaultModelPathForHelp() {
-  return HomeData::getDefaultFilesDirForHelpMessage() + "/" + "default_model.bin.gz";
+  return HomeData::getDefaultFilesDirForHelpMessage() + "/" + "model.bin.gz";
 }
 
 static vector<string> getDefaultModelPaths() {
   vector<string> dirs = HomeData::getDefaultFilesDirs();
   vector<string> ret;
   for(int i = 0; i<dirs.size(); i++) {
-    ret.push_back(dirs[i] + "/" + "default_model.bin.gz");
-    ret.push_back(dirs[i] + "/" + "default_model.txt.gz");
+    ret.push_back(dirs[i] + "/" + "model.bin.gz");
+    ret.push_back(dirs[i] + "/" + "model.txt.gz");
   }
   return ret;
 }
