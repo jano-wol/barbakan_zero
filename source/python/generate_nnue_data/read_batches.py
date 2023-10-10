@@ -44,7 +44,6 @@ def read_npz_training_data(
 
         logging.info(f"Beginning {npz_file} with {num_whole_steps * world_size} usable batches, my rank is {rank}")
         for n in range(num_whole_steps):
-            print(f"{n}!!!!!!!!!")
             start = (n * world_size + rank) * batch_size
             end = start + batch_size
 

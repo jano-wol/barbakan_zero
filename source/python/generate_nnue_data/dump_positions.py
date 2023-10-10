@@ -7,7 +7,7 @@ import torch.multiprocessing
 import read_batches
 
 
-def print_board(player_stones, waiter_stones):
+def print_position(player_stones, waiter_stones):
     board_size = player_stones.shape[0]
     p_s = (player_stones == 1.0).nonzero(as_tuple=True)
     w_s = (waiter_stones == 1.0).nonzero(as_tuple=True)
@@ -41,6 +41,10 @@ def print_board(player_stones, waiter_stones):
     print(print_str, flush=True)
 
 
+def dump_position(player_stones, waiter_stones):
+    print_position(player_stones, waiter_stones)
+
+
 if __name__ == "__main__":
     description = """
     Dump gomoku positions with random D4 symmetry from npz files to generate data for nnue.
@@ -57,13 +61,16 @@ if __name__ == "__main__":
     rank = 0
     barrier = None
     shuffle_dir = args["shuffle_dir"]
+    dump_dir = args["dump_dir"]
     pos_len = args["pos_len"]
     batch_size = args["batch_size"]
     logging.info(str(sys.argv))
     device = torch.device("cpu")
     shuffle_dir_path = os.path.realpath(shuffle_dir)
+    dump_dir_path = os.path.realpath(dump_dir)
     train_files = [os.path.join(shuffle_dir_path, fname) for fname in os.listdir(shuffle_dir_path) if
                    fname.endswith(".npz")]
+    dump_file = open(dump_dir_path, "wb")
     for [batch, n, num_whole_steps] in read_batches.read_npz_training_data(
             train_files,
             batch_size,
@@ -73,11 +80,10 @@ if __name__ == "__main__":
             device=device,
             randomize_symmetries=True
     ):
-        idx = 19
-        # for idx in range(25):
-        print(f'idx={idx}')
-        p = batch["binaryInputNCHW"][idx][1]
-        w = batch["binaryInputNCHW"][idx][2]
-        print_board(p, w)
+        curr_batch_size = batch["binaryInputNCHW"].shape[0]
+        for idx in range(curr_batch_size):
+            p = batch["binaryInputNCHW"][idx][1]
+            w = batch["binaryInputNCHW"][idx][2]
+            dump_position(p, w)
         if n == num_whole_steps - 1:
             break
