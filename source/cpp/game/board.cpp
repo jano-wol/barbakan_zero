@@ -227,6 +227,11 @@ void ThreatHandler::init(int boardS, int sixW) //it initialize the position glob
 	}
 }
 
+bool ThreatHandler::setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones)
+{
+	return true;
+}
+
 void ThreatHandler::print_board_extended(ostream& out) const
 {
 	int i, j, dir, sq;
@@ -342,6 +347,9 @@ void ThreatHandler::do_move(int m, int side)
 	int move_y = m % boardSize;
 
 	// linear bit update
+
+
+
 	linear_bit[side][0][move_x] |= (1 << (move_y + 5));
 	linear_bit[side][1][move_y] |= (1 << (move_x + 5));
 	linear_bit[side][2][move_x + move_y] |= (1 << (move_y + 5));
@@ -1363,7 +1371,7 @@ void Board::init(int xS, int yS)
   Location::getAdjacentOffsets(adj_offsets,x_size);
 }
 
-void Board::setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones)
+bool Board::setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones)
 {
   num_stones = blackStones.size() + whiteStones.size();
   for (auto b : blackStones)
@@ -1382,6 +1390,8 @@ void Board::setStartPosition(const std::vector<int>& blackStones, const std::vec
 	pos_hash ^= ZOBRIST_BOARD_HASH[loc][P_WHITE];
 	colors[loc] = C_WHITE;
   }  
+  bool isSanePosition = threatHandler.setStartPosition(blackStones, whiteStones);
+  return isSanePosition;
 }
 
 void Board::initBoardStruct()

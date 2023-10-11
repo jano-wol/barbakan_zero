@@ -191,14 +191,14 @@ struct GTPEngine
   bool setPosition(const vector<int>& blackStones, const vector<int>& whiteStones, int posLen)
   {
     Board board(posLen, posLen);
-    board.setStartPosition(blackStones, whiteStones);
+    bool isSanePosition = board.setStartPosition(blackStones, whiteStones);
     Player pla = ((blackStones.size() + whiteStones.size()) % 2 == 0) ? P_BLACK : P_WHITE;
     BoardHistory hist(board, pla, currentRules);
     hist.setInitialTurnNumber(board.numStonesOnBoard());  // Heuristic to guess at what turn this is
     vector<Move> newMoveHistory;
     setPositionAndRules(pla, board, hist, board, pla, newMoveHistory);
     Board::printBoard(std::cout, bot->getRootBoard(), Loc(.1), NULL);
-    return true;
+    return isSanePosition;
   }
 
   string rawNN(int whichSymmetry, double policyOptimism)
@@ -458,10 +458,15 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
         waiter.push_back(idx);
       }
     }
+    bool isSanePosition = true;
     if (((player.size() + waiter.size()) % 2) == 0) {
-      engine->setPosition(player, waiter, posLen);
+      isSanePosition = engine->setPosition(player, waiter, posLen);
     } else {
-      engine->setPosition(waiter, player, posLen);
+      isSanePosition = engine->setPosition(waiter, player, posLen);
+    }
+    if (isSanePosition == false)
+    {
+      continue;
     }
     auto response = engine->rawNN(0, 0);
   }

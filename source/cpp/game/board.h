@@ -175,6 +175,8 @@ struct ThreatHandler
 	ThreatHandler(int boardS, int sixW);
     ThreatHandler(const ThreatHandler& other);
     ThreatHandler& operator=(const ThreatHandler&) = default;
+
+	bool setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones);
 	
 	void init(int boardS, int sixW);
 	void print(uint32_t line);
@@ -347,7 +349,7 @@ struct Board
   void undo(MoveRecord record);
 
   // Init start position from a list of black and white stones
-  void setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones);
+  bool setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones);
 
   //Get what the position hash would be if we were to play this move.
   //Assumes the move is on an empty location.
