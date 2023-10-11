@@ -99,11 +99,6 @@ struct GTPEngine
 
   Rules getCurrentRules() { return currentRules; }
 
-  void clearStatsForNewGame()
-  {
-    // Currently nothing
-  }
-
   // Specify -1 for the sizes for a default
   void setOrResetBoardSize(ConfigParser& cfg, Logger& logger, Rand& seedRand, int boardXSize, int boardYSize)
   {
@@ -165,7 +160,6 @@ struct GTPEngine
     BoardHistory hist(board, pla, currentRules);
     vector<Move> newMoveHistory;
     setPositionAndRules(pla, board, hist, board, pla, newMoveHistory);
-    clearStatsForNewGame();
   }
 
   void setPositionAndRules(Player pla, const Board& board, const BoardHistory& h, const Board& newInitialBoard,
@@ -192,38 +186,16 @@ struct GTPEngine
     BoardHistory hist(board, pla, currentRules);
     vector<Move> newMoveHistory;
     setPositionAndRules(pla, board, hist, board, pla, newMoveHistory);
-    clearStatsForNewGame();
   }
 
-  bool setPosition(const vector<Move>& initialStones)
+  bool setPosition(const vector<int>& blackStones, const vector<int>& whiteStones, int posLen)
   {
-    // assert(bot->getRootHist().rules == currentRules); Komi can be 0 at the left side. Once rules do not have komi
-    // this can be turned on
-    int newXSize = bot->getRootBoard().x_size;
-    int newYSize = bot->getRootBoard().y_size;
-    Board board(newXSize, newYSize);
-    for (int i = 0; i < initialStones.size(); i++) {
-      if (!board.isOnBoard(initialStones[i].loc) || board.colors[initialStones[i].loc] != C_EMPTY) {
-        return false;
-      }
-      bool suc = board.setStone(initialStones[i].loc, initialStones[i].pla);
-      if (!suc) {
-        return false;
-      }
-    }
-
-    // Make sure nothing died along the way
-    for (int i = 0; i < initialStones.size(); i++) {
-      if (board.colors[initialStones[i].loc] != initialStones[i].pla) {
-        return false;
-      }
-    }
-    Player pla = P_BLACK;
+    Board board(posLen, posLen);
+    Player pla = ((blackStones.size() + whiteStones.size()) % 2 == 0) ? P_BLACK : P_WHITE;
     BoardHistory hist(board, pla, currentRules);
     hist.setInitialTurnNumber(board.numStonesOnBoard());  // Heuristic to guess at what turn this is
     vector<Move> newMoveHistory;
     setPositionAndRules(pla, board, hist, board, pla, newMoveHistory);
-    clearStatsForNewGame();
     return true;
   }
 
@@ -440,6 +412,9 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
 
   string line;
   std::cout << argv[1] << "!!!!\n";
+  string posLenStr(argv[2]);
+  int posLen = stoi(posLenStr);
+  engine->setPosition({}, {}, posLen);
   auto response = engine->rawNN(0, 0);
   std::cout << response << "\n";
   delete engine;

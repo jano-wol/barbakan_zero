@@ -17,4 +17,4 @@ SHUFFLE_OUT="${OUTPUT_FOLDER}/shuffle"
 DUMP_POSITIONS_OUT="${OUTPUT_FOLDER}/dump_positions_out"
 python3 ${PYTHON_FOLDER}/generate_nnue_data/shuffle.py ${INPUT_SELFPLAY_FOLDER} -expand-window-per-row 1.0 -taper-window-exponent 1.0 -out-dir ${SHUFFLE_OUT} -out-tmp-dir ${OUTPUT_FOLDER}/shuffle_tmp -num-processes 4 -batch-size 128 -keep-target-rows ${TARGET_NNUE_DATA_ROWS} -min-rows 20000 -output-npz
 python3 ${PYTHON_FOLDER}/generate_nnue_data/dump_positions.py -shuffle-dir ${SHUFFLE_OUT} -dump-dir ${DUMP_POSITIONS_OUT} -batch-size 128 -pos-len ${POS_LEN}
-${NN_ENGINE_FOLDER}/barbakan_zero generatennuedata ${OUTPUT_FOLDER}
+${NN_ENGINE_FOLDER}/barbakan_zero generatennuedata ${OUTPUT_FOLDER} ${POS_LEN}
