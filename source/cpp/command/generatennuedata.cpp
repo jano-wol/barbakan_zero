@@ -301,7 +301,7 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
                                                "Force KataGo to say a certain value in response to gtp version command",
                                                false, string(), "VERSION");
     cmd.add(overrideVersionArg);
-    //cmd.parse(argc, argv);
+    // cmd.parse(argc, argv);
     nnModelFile = cmd.getModelFile();
     overrideVersion = overrideVersionArg.getValue();
 
@@ -412,7 +412,7 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
 
   string line;
   std::cout << argv[1] << "!!!!\n";
-  string outputDir(argv[1]); 
+  string outputDir(argv[1]);
   string posLenStr(argv[2]);
   int posLen = stoi(posLenStr);
   stringstream ss;
@@ -437,9 +437,33 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
   std::ofstream eval(evalPath, std::ios::binary);
   std::ofstream evalVal(evalValPath, std::ios::binary);
-  engine->setPosition({}, {}, posLen);
-  auto response = engine->rawNN(0, 0);
-  std::cout << response << "\n";
+  size_t bufSize = 2 * posLen * posLen;
+  std::vector<char> buf(bufSize);
+  while (positions.read(&buf[0], bufSize)) {
+    std::streamsize bytes = positions.gcount();
+    auto b = static_cast<size_t>(bytes);
+    if (b != bufSize) {
+      std::cerr << "Failure while reading " << positionsPath << ". b=" << b << " expected=" << bufSize << "\n";
+      exit(1);
+    }
+
+    std::vector<int> player;
+    std::vector<int> waiter;
+    for (int idx = 0; idx < posLen * posLen; ++idx) {
+      if (buf[idx] == 1) {
+        player.push_back(idx);
+      }
+      if (buf[idx + posLen * posLen] == 1) {
+        waiter.push_back(idx);
+      }
+    }
+    if (((player.size() + waiter.size()) % 2) == 0) {
+      engine->setPosition(player, waiter, posLen);
+    } else {
+      engine->setPosition(waiter, player, posLen);
+    }
+    auto response = engine->rawNN(0, 0);
+  }
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();
