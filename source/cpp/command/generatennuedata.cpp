@@ -225,50 +225,34 @@ struct GTPEngine
         nnEval->evaluate(board, hist, nextPla, nnInputParams, buf, includeOwnerMap);
 
         NNOutput* nnOutput = buf.result.get();
-        out << "symmetry " << symmetry << endl;
-        out << "whiteWin " << Global::strprintf("%.6f", nnOutput->whiteWinProb) << endl;
-        out << "whiteLoss " << Global::strprintf("%.6f", nnOutput->whiteLossProb) << endl;
+        out << "playerWin " << Global::strprintf("%.6f", nnOutput->whiteWinProb) << endl;
+        out << "waiterWin " << Global::strprintf("%.6f", nnOutput->whiteLossProb) << endl;
         out << "noResult " << Global::strprintf("%.6f", nnOutput->whiteNoResultProb) << endl;
-        out << "whiteLead " << Global::strprintf("%.3f", nnOutput->whiteLead) << endl;
-        out << "whiteScoreSelfplay " << Global::strprintf("%.3f", nnOutput->whiteScoreMean) << endl;
-        out << "whiteScoreSelfplaySq " << Global::strprintf("%.3f", nnOutput->whiteScoreMeanSq) << endl;
-        out << "varTimeLeft " << Global::strprintf("%.3f", nnOutput->varTimeLeft) << endl;
-        out << "shorttermWinlossError " << Global::strprintf("%.3f", nnOutput->shorttermWinlossError) << endl;
-        out << "shorttermScoreError " << Global::strprintf("%.3f", nnOutput->shorttermScoreError) << endl;
-
+        
+        vector<pair<int, float>> posProbs;
         out << "policy" << endl;
         for (int y = 0; y < board.y_size; y++) {
           for (int x = 0; x < board.x_size; x++) {
             int pos = NNPos::xyToPos(x, y, nnOutput->nnXLen);
             float prob = nnOutput->policyProbs[pos];
-            if (prob < 0)
-              out << "    NAN ";
-            else
-              out << Global::strprintf("%8.6f ", prob);
+            prob = min(1.0f, max(prob, 0.0f));
+            posProbs.push_back({pos, prob});
           }
-          out << endl;
         }
-        out << "policyPass ";
-        {
-          // int pos = NNPos::locToPos(Board::PASS_LOC,board.x_size,nnOutput->nnXLen,nnOutput->nnYLen);
-          // float prob = nnOutput->policyProbs[pos];
-          // if(prob < 0)
-          // out << "    NAN "; // Probably shouldn't ever happen for pass unles the rules change, but we handle it
-          // anyways
-          // else
-          out << Global::strprintf("%8.6f ", 0, 0);
-          out << endl;
-        }
+        std::sort(posProbs.begin(), posProbs.end(), [](auto &left, auto &right) {
+          return left.second > right.second;
+        });
 
-        out << "whiteOwnership" << endl;
-        for (int y = 0; y < board.y_size; y++) {
-          for (int x = 0; x < board.x_size; x++) {
-            float whiteOwn = 0;
-            out << Global::strprintf("%9.7f ", whiteOwn);
+        size_t idx =  0;
+        for (const auto& posProb : posProbs)
+        {
+          out << "pos=" << posProb.first << " prob=" << Global::strprintf("%.6f", posProb.second) << endl;
+          ++idx;
+          if (idx == 10)
+          {
+            break;
           }
-          out << endl;
         }
-        out << endl;
       }
     }
 
@@ -469,6 +453,7 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
       continue;
     }
     auto response = engine->rawNN(0, 0);
+    std::cout << response << "\n";
   }
   delete engine;
   engine = NULL;
