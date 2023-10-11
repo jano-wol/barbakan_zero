@@ -14,7 +14,7 @@ if [ "${MODEL_PATH}" == "" ]; then
     exit 1
 fi
 CONFIG_PATH="${BUILD_DATA_FOLDER}/configs/gtp/default_gtp.cfg"
-GENERATE_NNUE_DATA_OUT=${BUILD_TEST_DATA_FOLDER}/generate_nnue_data_out
+GENERATE_NNUE_DATA_OUT=${BUILD_TEST_DATA_FOLDER}/generate_nnue_data_out/
 if [ ! -d ${GENERATE_NNUE_DATA_OUT} ]; then
   mkdir -p ${GENERATE_NNUE_DATA_OUT};
 fi
