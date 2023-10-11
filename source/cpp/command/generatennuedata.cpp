@@ -191,7 +191,7 @@ struct GTPEngine
   bool setPosition(const vector<int>& blackStones, const vector<int>& whiteStones, int posLen)
   {
     Board board(posLen, posLen);
-    bool isSanePosition = board.setStartPosition(blackStones, whiteStones);
+    bool isSanePosition = board.setStartPosition(blackStones, whiteStones, posLen);
     Player pla = ((blackStones.size() + whiteStones.size()) % 2 == 0) ? P_BLACK : P_WHITE;
     BoardHistory hist(board, pla, currentRules);
     hist.setInitialTurnNumber(board.numStonesOnBoard());  // Heuristic to guess at what turn this is
