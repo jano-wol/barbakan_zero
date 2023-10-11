@@ -1363,6 +1363,27 @@ void Board::init(int xS, int yS)
   Location::getAdjacentOffsets(adj_offsets,x_size);
 }
 
+void Board::setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones)
+{
+  num_stones = blackStones.size() + whiteStones.size();
+  for (auto b : blackStones)
+  {
+	int y = b / x_size;
+	int x = b % x_size;
+	Loc loc = (x+1) + (y+1)*(x_size+1);
+	pos_hash ^= ZOBRIST_BOARD_HASH[loc][P_BLACK];
+	colors[loc] = C_BLACK;
+  }
+  for (auto w : whiteStones)
+  {
+	int y = w / x_size;
+	int x = w % x_size;
+	Loc loc = (x+1) + (y+1)*(x_size+1);
+	pos_hash ^= ZOBRIST_BOARD_HASH[loc][P_WHITE];
+	colors[loc] = C_WHITE;
+  }  
+}
+
 void Board::initBoardStruct()
 {
   if(IS_INITALIZED)

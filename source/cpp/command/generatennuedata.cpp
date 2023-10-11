@@ -191,11 +191,13 @@ struct GTPEngine
   bool setPosition(const vector<int>& blackStones, const vector<int>& whiteStones, int posLen)
   {
     Board board(posLen, posLen);
+    board.setStartPosition(blackStones, whiteStones);
     Player pla = ((blackStones.size() + whiteStones.size()) % 2 == 0) ? P_BLACK : P_WHITE;
     BoardHistory hist(board, pla, currentRules);
     hist.setInitialTurnNumber(board.numStonesOnBoard());  // Heuristic to guess at what turn this is
     vector<Move> newMoveHistory;
     setPositionAndRules(pla, board, hist, board, pla, newMoveHistory);
+    Board::printBoard(std::cout, bot->getRootBoard(), Loc(.1), NULL);
     return true;
   }
 
@@ -411,7 +413,6 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   engine->setOrResetBoardSize(cfg, logger, seedRand, defaultBoardXSize, defaultBoardYSize);
 
   string line;
-  std::cout << argv[1] << "!!!!\n";
   string outputDir(argv[1]);
   string posLenStr(argv[2]);
   int posLen = stoi(posLenStr);
