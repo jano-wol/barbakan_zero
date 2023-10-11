@@ -346,7 +346,7 @@ struct Board
   //Undo the move given by record. Moves MUST be undone in the order they were made.
   void undo(MoveRecord record);
 
-  // 
+  // Init start position from a list of black and white stones
   void setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones);
 
   //Get what the position hash would be if we were to play this move.
