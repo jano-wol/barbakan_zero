@@ -254,7 +254,7 @@ bool ThreatHandler::setStartPosition(const std::vector<int>& blackStones, const 
 	linear_bit[side][1][move_y] |= (1 << (move_x + 5));
 	linear_bit[side][2][move_x + move_y] |= (1 << (move_y + 5));
 	linear_bit[side][3][move_y - move_x + boardSize - 1] |= (1 << (move_y + 5));
-	square[1].t[w >> 6] |= ((1ULL << (w - ((w >> 6) << w))));
+	square[1].t[w >> 6] |= ((1ULL << (w - ((w >> 6) << 6))));
   }
   for (int m = 0; m < posLen * posLen; ++m)
   {
