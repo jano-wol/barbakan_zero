@@ -166,7 +166,7 @@ struct GTPEngine
                            Player newInitialPla, const vector<Move> newMoveHistory)
   {
     BoardHistory hist(h);
-
+    hist.isGameFinished = true; // This will turn off last move nn input
     currentRules = hist.rules;
     bot->setPosition(pla, board, hist);
     initialBoard = newInitialBoard;
