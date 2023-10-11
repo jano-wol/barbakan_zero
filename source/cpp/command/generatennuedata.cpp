@@ -412,8 +412,31 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
 
   string line;
   std::cout << argv[1] << "!!!!\n";
+  string outputDir(argv[1]); 
   string posLenStr(argv[2]);
   int posLen = stoi(posLenStr);
+  stringstream ss;
+  ss.str("");
+  ss << outputDir << "dump_positions_out";
+  string positionsPath = ss.str();
+  ss.str("");
+  ss << outputDir << "move_candidate";
+  string moveCandidatePath = ss.str();
+  ss.str("");
+  ss << outputDir << "move_candidate_val";
+  string moveCandidateValPath = ss.str();
+  ss.str("");
+  ss << outputDir << "eval";
+  string evalPath = ss.str();
+  ss.str("");
+  ss << outputDir << "eval_val";
+  string evalValPath = ss.str();
+
+  std::ifstream positions(positionsPath, std::ios::binary);
+  std::ofstream moveCandidate(moveCandidatePath, std::ios::binary);
+  std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
+  std::ofstream eval(evalPath, std::ios::binary);
+  std::ofstream evalVal(evalValPath, std::ios::binary);
   engine->setPosition({}, {}, posLen);
   auto response = engine->rawNN(0, 0);
   std::cout << response << "\n";
