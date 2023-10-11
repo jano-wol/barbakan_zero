@@ -1704,8 +1704,8 @@ int Location::euclideanDistanceSquared(Loc loc0, Loc loc1, int x_size) {
 char PlayerIO::colorToChar(Color c)
 {
   switch(c) {
-  case C_BLACK: return 'X';
-  case C_WHITE: return 'O';
+  case C_BLACK: return 'O';
+  case C_WHITE: return 'X';
   case C_EMPTY: return '.';
   default:  return '#';
   }
