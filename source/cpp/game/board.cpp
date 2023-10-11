@@ -1935,6 +1935,8 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
     }
     out << "\n";
   }
+  char nextPlayer = ((board.num_stones % 2) == 0) ? PlayerIO::colorToChar(P_BLACK) : PlayerIO::colorToChar(P_WHITE);
+  out << "next=" << nextPlayer << "\n";
   out << "\nThreatHandler\n";
   board.threatHandler.print_board_extended(out);
 
