@@ -268,6 +268,10 @@ struct GTPEngine
   {
     std::ofstream& evalWrite = allRow * 0.95 < currRow ? evalVal : eval;
     std::ofstream& moveCandidateWrite = allRow * 0.95 < currRow ? moveCandidateVal : moveCandidate;
+    double evalNormalizer = 128.0; // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
+    double moveCandidateNormalizer = 127.0; // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
+  
+  
   }
 
   SearchParams getParams() { return params; }
