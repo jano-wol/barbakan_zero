@@ -197,7 +197,7 @@ struct GTPEngine
     hist.setInitialTurnNumber(board.numStonesOnBoard());  // Heuristic to guess at what turn this is
     vector<Move> newMoveHistory;
     setPositionAndRules(pla, board, hist, board, pla, newMoveHistory);
-    Board::printBoard(std::cout, bot->getRootBoard(), Loc(.1), NULL);
+    Board::printBoard(std::cout, bot->getRootBoard(), Loc(-1), NULL);
     return isSanePosition;
   }
 
