@@ -197,7 +197,7 @@ struct GTPEngine
     hist.setInitialTurnNumber(board.numStonesOnBoard());  // Heuristic to guess at what turn this is
     vector<Move> newMoveHistory;
     setPositionAndRules(pla, board, hist, board, pla, newMoveHistory);
-    Board::printBoard(std::cout, bot->getRootBoard(), Loc(-1), NULL);
+    //Board::printBoard(std::cout, bot->getRootBoard(), Loc(-1), NULL);
     return isSanePosition;
   }
 
@@ -262,16 +262,58 @@ struct GTPEngine
     return Global::trim(out.str());
   }
 
+  std::vector<uint8_t> getPackedPos(std::vector<char> pAsVec)
+  {
+    // This logic is only tested for board size 20. For less even board sizes pack cycle might fail, but test should
+    // indicate this possible error.
+    std::vector<uint8_t> ret;
+    int gap = pAsVec.size() % 8;
+    for (int i = 0; i < gap; i++) {
+      pAsVec.push_back(0);
+    }
+    for (size_t i = 0; i < pAsVec.size() / 8; ++i) {
+      uint8_t packData = 0;
+      for (int j = 0; j < 8; ++j) {
+        if (pAsVec[i * 8 + j]) {
+          packData += 1 << j;
+        }
+      }
+      ret.push_back(packData);
+    }
+    return ret;
+  }
+
+  std::vector<uint8_t> getTrainingRow(std::vector<uint8_t> packedPos, std::vector<uint8_t> target,
+                                      size_t trainingRowSize)
+  {
+    auto ret = packedPos;
+    ret.insert(ret.end(), target.begin(), target.end());
+    size_t gapSize = trainingRowSize - ret.size();
+    std::vector<uint8_t> gap(gapSize, 0);
+    ret.insert(ret.end(), gap.begin(), gap.end());
+    return ret;
+  }
+
   void dumpTargets(const pair<float, vector<float>>& targets, const std::vector<char>& buf, size_t currRow,
                    size_t allRow, std::ofstream& eval, std::ofstream& evalVal, std::ofstream& moveCandidate,
                    std::ofstream& moveCandidateVal)
   {
     std::ofstream& evalWrite = allRow * 0.95 < currRow ? evalVal : eval;
     std::ofstream& moveCandidateWrite = allRow * 0.95 < currRow ? moveCandidateVal : moveCandidate;
-    double evalNormalizer = 128.0; // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
-    double moveCandidateNormalizer = 127.0; // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
-  
-  
+    float evalNormalizer = 128.0f;           // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
+    float moveCandidateNormalizer = 127.0f;  // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
+    constexpr size_t trainingRowSize = 512;  // DEFINED in BARBAKAN PROJECT loaders
+    auto packedPos = getPackedPos(buf);
+    std::vector<uint8_t> dumpEval;
+    dumpEval.push_back(static_cast<uint8_t>(targets.first * evalNormalizer + 0.5f));
+    std::vector<uint8_t> dumpMoveDist;
+    for (auto f : targets.second) {
+      dumpMoveDist.push_back(static_cast<uint8_t>(f * moveCandidateNormalizer + 0.5f));
+    }
+    auto evalTrainingRow = getTrainingRow(packedPos, dumpEval, trainingRowSize);
+    auto moveCandidateTrainingRow = getTrainingRow(packedPos, dumpMoveDist, trainingRowSize);
+    evalWrite.write(reinterpret_cast<const char*>(evalTrainingRow.data()), trainingRowSize);
+    moveCandidateWrite.write(reinterpret_cast<const char*>(moveCandidateTrainingRow.data()), trainingRowSize);
   }
 
   SearchParams getParams() { return params; }
