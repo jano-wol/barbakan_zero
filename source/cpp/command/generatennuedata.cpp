@@ -201,68 +201,64 @@ struct GTPEngine
     return isSanePosition;
   }
 
-  string rawNN(int whichSymmetry, double policyOptimism)
+  pair<float, vector<float>> getNNUETargets()
   {
+    Board board = bot->getRootBoard();
+    BoardHistory hist = bot->getRootHist();
+    Player nextPla = bot->getRootPla();
+
+    MiscNNInputParams nnInputParams;
+    nnInputParams.playoutDoublingAdvantage =
+        (params.playoutDoublingAdvantagePla == C_EMPTY || params.playoutDoublingAdvantagePla == nextPla)
+            ? staticPlayoutDoublingAdvantage
+            : -staticPlayoutDoublingAdvantage;
+    nnInputParams.symmetry = 0;
+    nnInputParams.policyOptimism = 0;
+    NNResultBuf buf;
+    bool includeOwnerMap = true;
+    nnEval->evaluate(board, hist, nextPla, nnInputParams, buf, includeOwnerMap);
+    NNOutput* nnOutput = buf.result.get();
+    if (0.0001 <= nnOutput->whiteNoResultProb) {
+      ASSERT_UNREACHABLE;
+    }
+    float rawPlayerWinProb = (nextPla == P_BLACK) ? nnOutput->whiteLossProb : nnOutput->whiteWinProb;
+    float playerWinProb = min(1.0f, max(rawPlayerWinProb, 0.0f));
+    vector<float> posProbs;
+    for (int y = 0; y < board.y_size; y++) {
+      for (int x = 0; x < board.x_size; x++) {
+        int pos = NNPos::xyToPos(x, y, nnOutput->nnXLen);
+        float prob = nnOutput->policyProbs[pos];
+        prob = min(1.0f, max(prob, 0.0f));
+        posProbs.push_back(prob);
+      }
+    }
+    return {playerWinProb, posProbs};
+  }
+
+  string rawNN()
+  {
+    auto targets = getNNUETargets();
+
     if (nnEval == NULL)
       return "";
     ostringstream out;
+    out << "playerWin=" << Global::strprintf("%.6f", targets.first) << endl;
+    out << "policy" << endl;
 
-    for (int symmetry = 0; symmetry < NNInputs::NUM_SYMMETRY_COMBINATIONS; symmetry++) {
-      if (whichSymmetry == NNInputs::SYMMETRY_ALL || whichSymmetry == symmetry) {
-        Board board = bot->getRootBoard();
-        BoardHistory hist = bot->getRootHist();
-        Player nextPla = bot->getRootPla();
-
-        MiscNNInputParams nnInputParams;
-        nnInputParams.playoutDoublingAdvantage =
-            (params.playoutDoublingAdvantagePla == C_EMPTY || params.playoutDoublingAdvantagePla == nextPla)
-                ? staticPlayoutDoublingAdvantage
-                : -staticPlayoutDoublingAdvantage;
-        nnInputParams.symmetry = symmetry;
-        nnInputParams.policyOptimism = policyOptimism;
-        NNResultBuf buf;
-        bool includeOwnerMap = true;
-        nnEval->evaluate(board, hist, nextPla, nnInputParams, buf, includeOwnerMap);
-        NNOutput* nnOutput = buf.result.get();
-        if (0.0001 <= nnOutput->whiteNoResultProb) {
-          ASSERT_UNREACHABLE;
-        }
-        float rawPlayerWinProb = (nextPla == P_BLACK) ? nnOutput->whiteLossProb : nnOutput->whiteWinProb;
-        float playerWinProb = min(1.0f, max(rawPlayerWinProb, 0.0f));
-        out << "playerWin=" << Global::strprintf("%.6f", playerWinProb) << endl;
-        vector<pair<int, float>> posProbs;
-        out << "policy" << endl;
-        float maxProb = -1;
-        for (int y = 0; y < board.y_size; y++) {
-          for (int x = 0; x < board.x_size; x++) {
-            int pos = NNPos::xyToPos(x, y, nnOutput->nnXLen);
-            float prob = nnOutput->policyProbs[pos];
-            prob = min(1.0f, max(prob, 0.0f));
-            if (prob > maxProb) {
-              maxProb = prob;
-            }
-            posProbs.push_back({pos, prob});
-          }
-        }
-        std::sort(posProbs.begin(), posProbs.end(), [](auto& left, auto& right) { return left.second > right.second; });
-        if (true) {  // no prob scaling, all moves are bad / not legal
-          maxProb = 1.0;
-        }
-        for (auto& posProb : posProbs) {
-          posProb.second /= maxProb;
-        }
-        size_t idx = 0;
-        for (const auto& posProb : posProbs) {
-          out << "pos=" << posProb.first << " prob=" << Global::strprintf("%.6f", posProb.second)
-              << endl;
-          ++idx;
-          if (idx == 10) {
-            break;
-          }
-        }
+    auto policyProbs = targets.second;
+    vector<pair<int, float>> posProbs;
+    for (int idx = 0; idx < policyProbs.size(); ++idx) {
+      posProbs.push_back({idx, policyProbs[idx]});
+    }
+    std::sort(posProbs.begin(), posProbs.end(), [](auto& left, auto& right) { return left.second > right.second; });
+    size_t idx = 0;
+    for (const auto& posProb : posProbs) {
+      out << "pos=" << posProb.first << " prob=" << Global::strprintf("%.6f", posProb.second) << endl;
+      ++idx;
+      if (idx == 10) {
+        break;
       }
     }
-
     return Global::trim(out.str());
   }
 
@@ -458,7 +454,7 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
     if (isSanePosition == false) {
       continue;
     }
-    auto response = engine->rawNN(0, 0);
+    auto response = engine->rawNN();
     std::cout << response << "\n";
   }
   delete engine;
