@@ -166,7 +166,7 @@ struct GTPEngine
                            Player newInitialPla, const vector<Move> newMoveHistory)
   {
     BoardHistory hist(h);
-    hist.isGameFinished = true; // This will turn off last move nn input
+    hist.isGameFinished = true;  // This will turn off last move nn input
     currentRules = hist.rules;
     bot->setPosition(pla, board, hist);
     initialBoard = newInitialBoard;
@@ -228,7 +228,7 @@ struct GTPEngine
         out << "playerWin " << Global::strprintf("%.6f", nnOutput->whiteWinProb) << endl;
         out << "waiterWin " << Global::strprintf("%.6f", nnOutput->whiteLossProb) << endl;
         out << "noResult " << Global::strprintf("%.6f", nnOutput->whiteNoResultProb) << endl;
-        
+
         vector<pair<int, float>> posProbs;
         out << "policy" << endl;
         for (int y = 0; y < board.y_size; y++) {
@@ -239,17 +239,13 @@ struct GTPEngine
             posProbs.push_back({pos, prob});
           }
         }
-        std::sort(posProbs.begin(), posProbs.end(), [](auto &left, auto &right) {
-          return left.second > right.second;
-        });
+        std::sort(posProbs.begin(), posProbs.end(), [](auto& left, auto& right) { return left.second > right.second; });
 
-        size_t idx =  0;
-        for (const auto& posProb : posProbs)
-        {
+        size_t idx = 0;
+        for (const auto& posProb : posProbs) {
           out << "pos=" << posProb.first << " prob=" << Global::strprintf("%.6f", posProb.second) << endl;
           ++idx;
-          if (idx == 10)
-          {
+          if (idx == 10) {
             break;
           }
         }
@@ -448,8 +444,7 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
     } else {
       isSanePosition = engine->setPosition(waiter, player, posLen);
     }
-    if (isSanePosition == false)
-    {
+    if (isSanePosition == false) {
       continue;
     }
     auto response = engine->rawNN(0, 0);
