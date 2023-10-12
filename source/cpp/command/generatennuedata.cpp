@@ -225,10 +225,11 @@ struct GTPEngine
         nnEval->evaluate(board, hist, nextPla, nnInputParams, buf, includeOwnerMap);
 
         NNOutput* nnOutput = buf.result.get();
-        out << "playerWin " << Global::strprintf("%.6f", nnOutput->whiteWinProb) << endl;
-        out << "waiterWin " << Global::strprintf("%.6f", nnOutput->whiteLossProb) << endl;
-        out << "noResult " << Global::strprintf("%.6f", nnOutput->whiteNoResultProb) << endl;
-
+        if (0.0001 <= nnOutput->whiteNoResultProb) {
+          ASSERT_UNREACHABLE;
+        }
+        float playerWinProb = min(1.0f, max(nnOutput->whiteWinProb, 0.0f));
+        out << "playerWin=" << Global::strprintf("%.6f", playerWinProb) << endl;
         vector<pair<int, float>> posProbs;
         out << "policy" << endl;
         for (int y = 0; y < board.y_size; y++) {
