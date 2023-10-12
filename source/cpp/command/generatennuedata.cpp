@@ -227,24 +227,34 @@ struct GTPEngine
         if (0.0001 <= nnOutput->whiteNoResultProb) {
           ASSERT_UNREACHABLE;
         }
-        float rawPlayerWinProb = (nextPla == P_BLACK) ?  nnOutput->whiteLossProb : nnOutput->whiteWinProb;
+        float rawPlayerWinProb = (nextPla == P_BLACK) ? nnOutput->whiteLossProb : nnOutput->whiteWinProb;
         float playerWinProb = min(1.0f, max(rawPlayerWinProb, 0.0f));
         out << "playerWin=" << Global::strprintf("%.6f", playerWinProb) << endl;
         vector<pair<int, float>> posProbs;
         out << "policy" << endl;
+        float maxProb = -1;
         for (int y = 0; y < board.y_size; y++) {
           for (int x = 0; x < board.x_size; x++) {
             int pos = NNPos::xyToPos(x, y, nnOutput->nnXLen);
             float prob = nnOutput->policyProbs[pos];
             prob = min(1.0f, max(prob, 0.0f));
+            if (prob > maxProb) {
+              maxProb = prob;
+            }
             posProbs.push_back({pos, prob});
           }
         }
         std::sort(posProbs.begin(), posProbs.end(), [](auto& left, auto& right) { return left.second > right.second; });
-
+        if (maxProb < 0.0001) {  // no prob scaling, all moves are bad / not legal
+          maxProb = 1.0;
+        }
+        for (auto& posProb : posProbs) {
+          posProb.second /= maxProb;
+        }
         size_t idx = 0;
         for (const auto& posProb : posProbs) {
-          out << "pos=" << posProb.first << " prob=" << Global::strprintf("%.6f", posProb.second) << endl;
+          out << "pos=" << posProb.first << " scaledProb=" << Global::strprintf("%.6f", posProb.second)
+              << endl;
           ++idx;
           if (idx == 10) {
             break;
