@@ -223,12 +223,12 @@ struct GTPEngine
         NNResultBuf buf;
         bool includeOwnerMap = true;
         nnEval->evaluate(board, hist, nextPla, nnInputParams, buf, includeOwnerMap);
-
         NNOutput* nnOutput = buf.result.get();
         if (0.0001 <= nnOutput->whiteNoResultProb) {
           ASSERT_UNREACHABLE;
         }
-        float playerWinProb = min(1.0f, max(nnOutput->whiteWinProb, 0.0f));
+        float rawPlayerWinProb = (nextPla == P_BLACK) ?  nnOutput->whiteLossProb : nnOutput->whiteWinProb;
+        float playerWinProb = min(1.0f, max(rawPlayerWinProb, 0.0f));
         out << "playerWin=" << Global::strprintf("%.6f", playerWinProb) << endl;
         vector<pair<int, float>> posProbs;
         out << "policy" << endl;
