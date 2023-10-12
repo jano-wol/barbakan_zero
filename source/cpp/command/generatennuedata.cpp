@@ -245,7 +245,7 @@ struct GTPEngine
           }
         }
         std::sort(posProbs.begin(), posProbs.end(), [](auto& left, auto& right) { return left.second > right.second; });
-        if (maxProb < 0.0001) {  // no prob scaling, all moves are bad / not legal
+        if (true) {  // no prob scaling, all moves are bad / not legal
           maxProb = 1.0;
         }
         for (auto& posProb : posProbs) {
@@ -253,7 +253,7 @@ struct GTPEngine
         }
         size_t idx = 0;
         for (const auto& posProb : posProbs) {
-          out << "pos=" << posProb.first << " scaledProb=" << Global::strprintf("%.6f", posProb.second)
+          out << "pos=" << posProb.first << " prob=" << Global::strprintf("%.6f", posProb.second)
               << endl;
           ++idx;
           if (idx == 10) {
