@@ -262,6 +262,14 @@ struct GTPEngine
     return Global::trim(out.str());
   }
 
+  void dumpTargets(const pair<float, vector<float>>& targets, const std::vector<char>& buf, size_t currRow,
+                   size_t allRow, std::ofstream& eval, std::ofstream& evalVal, std::ofstream& moveCandidate,
+                   std::ofstream& moveCandidateVal)
+  {
+    std::ofstream& evalWrite = allRow * 0.95 < currRow ? evalVal : eval;
+    std::ofstream& moveCandidateWrite = allRow * 0.95 < currRow ? moveCandidateVal : moveCandidate;
+  }
+
   SearchParams getParams() { return params; }
 
   void setParams(SearchParams p)
@@ -421,13 +429,25 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   string evalValPath = ss.str();
 
   std::ifstream positions(positionsPath, std::ios::binary);
-  std::ofstream moveCandidate(moveCandidatePath, std::ios::binary);
-  std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
   std::ofstream eval(evalPath, std::ios::binary);
   std::ofstream evalVal(evalValPath, std::ios::binary);
+  std::ofstream moveCandidate(moveCandidatePath, std::ios::binary);
+  std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
   size_t bufSize = 2 * posLen * posLen;
   std::vector<char> buf(bufSize);
+  size_t allRow = 0;
+  {
+    ifstream in(positionsPath, ifstream::ate | ifstream::binary);
+    size_t fileSize = in.tellg();
+    if (fileSize % bufSize != 0) {
+      ASSERT_UNREACHABLE;
+    }
+    allRow = fileSize / bufSize;
+  }
+
+  size_t currRow = 0;  // for validation set creation
   while (positions.read(&buf[0], bufSize)) {
+    ++currRow;
     std::streamsize bytes = positions.gcount();
     auto b = static_cast<size_t>(bytes);
     if (b != bufSize) {
@@ -454,8 +474,8 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
     if (isSanePosition == false) {
       continue;
     }
-    auto response = engine->rawNN();
-    std::cout << response << "\n";
+    auto targets = engine->getNNUETargets();
+    engine->dumpTargets(targets, buf, currRow, allRow, eval, evalVal, moveCandidate, moveCandidateVal);
   }
   delete engine;
   engine = NULL;
