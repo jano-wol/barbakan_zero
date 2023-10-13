@@ -13,10 +13,12 @@
 
 using namespace std;
 
-struct GTPEngine
+namespace datagenerator
 {
-  GTPEngine(const GTPEngine&) = delete;
-  GTPEngine& operator=(const GTPEngine&) = delete;
+struct DataGeneratorEngine
+{
+  DataGeneratorEngine(const DataGeneratorEngine&) = delete;
+  DataGeneratorEngine& operator=(const DataGeneratorEngine&) = delete;
 
   const string nnModelFile;
   const bool assumeMultipleStartingBlackMovesAreHandicap;
@@ -56,10 +58,10 @@ struct GTPEngine
 
   double genmoveTimeSum;
 
-  GTPEngine(const string& modelFile, SearchParams initialParams, Rules initialRules, bool assumeMultiBlackHandicap,
-            bool prevtEncore, double dynamicPDACapPerOppLead, double staticPDA, bool staticPDAPrecedence,
-            bool avoidDagger, double genmoveWRN, double analysisWRN, bool genmoveAntiMir, bool analysisAntiMir,
-            Player persp, int pvLen)
+  DataGeneratorEngine(const string& modelFile, SearchParams initialParams, Rules initialRules,
+                      bool assumeMultiBlackHandicap, bool prevtEncore, double dynamicPDACapPerOppLead, double staticPDA,
+                      bool staticPDAPrecedence, bool avoidDagger, double genmoveWRN, double analysisWRN,
+                      bool genmoveAntiMir, bool analysisAntiMir, Player persp, int pvLen)
       : nnModelFile(modelFile),
         assumeMultipleStartingBlackMovesAreHandicap(assumeMultiBlackHandicap),
         analysisPVLen(pvLen),
@@ -88,7 +90,7 @@ struct GTPEngine
         genmoveTimeSum(0.0)
   {}
 
-  ~GTPEngine()
+  ~DataGeneratorEngine()
   {
     stopAndWait();
     delete bot;
@@ -325,6 +327,7 @@ struct GTPEngine
     bot->setParams(params);
   }
 };
+}  // namespace datagenerator
 
 int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
 {
@@ -452,12 +455,11 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
                                                                      : true;
 
   Player perspective = Setup::parseReportAnalysisWinrates(cfg, C_EMPTY);
-
-  GTPEngine* engine =
-      new GTPEngine(nnModelFile, initialParams, initialRules, assumeMultipleStartingBlackMovesAreHandicap,
-                    preventEncore, dynamicPlayoutDoublingAdvantageCapPerOppLead, staticPlayoutDoublingAdvantage,
-                    staticPDATakesPrecedence, avoidMYTDaggerHack, genmoveWideRootNoise, analysisWideRootNoise,
-                    genmoveAntiMirror, analysisAntiMirror, perspective, analysisPVLen);
+  datagenerator::DataGeneratorEngine* engine = new datagenerator::DataGeneratorEngine(
+      nnModelFile, initialParams, initialRules, assumeMultipleStartingBlackMovesAreHandicap, preventEncore,
+      dynamicPlayoutDoublingAdvantageCapPerOppLead, staticPlayoutDoublingAdvantage, staticPDATakesPrecedence,
+      avoidMYTDaggerHack, genmoveWideRootNoise, analysisWideRootNoise, genmoveAntiMirror, analysisAntiMirror,
+      perspective, analysisPVLen);
   engine->setOrResetBoardSize(cfg, logger, seedRand, defaultBoardXSize, defaultBoardYSize);
 
   stringstream ss;
