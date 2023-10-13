@@ -197,7 +197,6 @@ struct GTPEngine
     hist.setInitialTurnNumber(board.numStonesOnBoard());  // Heuristic to guess at what turn this is
     vector<Move> newMoveHistory;
     setPositionAndRules(pla, board, hist, board, pla, newMoveHistory);
-    //Board::printBoard(std::cout, bot->getRootBoard(), Loc(-1), NULL);
     return isSanePosition;
   }
 
@@ -242,6 +241,7 @@ struct GTPEngine
     if (nnEval == NULL)
       return "";
     ostringstream out;
+    Board::printBoard(out, bot->getRootBoard(), Loc(-1), NULL);
     out << "playerWin=" << Global::strprintf("%.6f", targets.first) << endl;
     out << "policy" << endl;
 
@@ -328,6 +328,9 @@ struct GTPEngine
 int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
 {
   Board::initBoardStruct();
+  string outputDir(argv[1]);
+  string posLenStr(argv[2]);
+  int posLen = stoi(posLenStr);
   Rand seedRand;
 
   ConfigParser cfg;
@@ -360,9 +363,12 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   else if (cfg.contains("logFile"))
     logger.addFile(cfg.getString("logFile"));
   else if (cfg.contains("logDir")) {
-    MakeDir::make(cfg.getString("logDir"));
+    stringstream ss;
+    ss.str("");
+    ss << outputDir << "gtp_logs";
+    MakeDir::make(ss.str());
     Rand rand;
-    logger.addFile(cfg.getString("logDir") + "/" + DateTime::getCompactDateTimeString() + "-" +
+    logger.addFile(ss.str() + "/" + DateTime::getCompactDateTimeString() + "-" +
                    Global::uint32ToHexString(rand.nextUInt()) + ".log");
   }
   bool loggingToStderr = false;
@@ -453,25 +459,21 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
                     genmoveAntiMirror, analysisAntiMirror, perspective, analysisPVLen);
   engine->setOrResetBoardSize(cfg, logger, seedRand, defaultBoardXSize, defaultBoardYSize);
 
-  string line;
-  string outputDir(argv[1]);
-  string posLenStr(argv[2]);
-  int posLen = stoi(posLenStr);
   stringstream ss;
   ss.str("");
   ss << outputDir << "dump_positions_out";
   string positionsPath = ss.str();
   ss.str("");
-  ss << outputDir << "move_candidate";
+  ss << outputDir << "move_candidate.bin";
   string moveCandidatePath = ss.str();
   ss.str("");
-  ss << outputDir << "move_candidate_val";
+  ss << outputDir << "move_candidate_val.bin";
   string moveCandidateValPath = ss.str();
   ss.str("");
-  ss << outputDir << "eval";
+  ss << outputDir << "eval.bin";
   string evalPath = ss.str();
   ss.str("");
-  ss << outputDir << "eval_val";
+  ss << outputDir << "eval_val.bin";
   string evalValPath = ss.str();
 
   std::ifstream positions(positionsPath, std::ios::binary);
