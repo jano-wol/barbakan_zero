@@ -227,6 +227,50 @@ void ThreatHandler::init(int boardS, int sixW) //it initialize the position glob
 	}
 }
 
+bool ThreatHandler::setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones, int posLen)
+{
+  int sixW = 1;	
+  int num_stones = blackStones.size() + whiteStones.size();
+  int next_player = ((num_stones % 2) == 0) ? 0 : 1;
+
+  init(posLen, sixW);
+  for (auto b : blackStones)
+  {
+	int move_x = b / boardSize;
+	int move_y = b % boardSize;
+	int side = 0;
+	linear_bit[side][0][move_x] |= (1 << (move_y + 5));
+	linear_bit[side][1][move_y] |= (1 << (move_x + 5));
+	linear_bit[side][2][move_x + move_y] |= (1 << (move_y + 5));
+	linear_bit[side][3][move_y - move_x + boardSize - 1] |= (1 << (move_y + 5));
+	square[0].t[b >> 6] |= ((1ULL << (b - ((b >> 6) << 6))));
+  }
+  for (auto w : whiteStones)
+  {
+	int move_x = w / boardSize;
+	int move_y = w % boardSize;
+	int side = 1;
+	linear_bit[side][0][move_x] |= (1 << (move_y + 5));
+	linear_bit[side][1][move_y] |= (1 << (move_x + 5));
+	linear_bit[side][2][move_x + move_y] |= (1 << (move_y + 5));
+	linear_bit[side][3][move_y - move_x + boardSize - 1] |= (1 << (move_y + 5));
+	square[1].t[w >> 6] |= ((1ULL << (w - ((w >> 6) << 6))));
+  }
+  for (int m = 0; m < posLen * posLen; ++m)
+  {
+	for (int side = 0; side < 2; ++side)
+	{
+		for (int dir = 0; dir < 4; ++ dir)
+		{
+			update_move_side_dir(m, side, dir);
+		}
+	}
+  }
+  generate_legal_moves(next_player);
+  bool isSane = (five_threat == FIVE_WIN) ? false : true;
+  return isSane;
+}
+
 void ThreatHandler::print_board_extended(ostream& out) const
 {
 	int i, j, dir, sq;
@@ -472,6 +516,73 @@ void ThreatHandler::local_update_of_threats(int m)
 			}
 		}
 	}
+}
+
+void ThreatHandler::update_move_side_dir(int m, int side, int dir)
+{
+	int move_x = m / boardSize;
+	int move_y = m % boardSize;
+	int index;
+	uint32_t line;
+	uint32_t border;
+
+	if (dir == 0)
+	{
+		index = move_y + 5;
+		line = linear_bit[side][0][move_x];
+		border = (border_bit[0][move_x] | linear_bit[side ^ 1][0][move_x]);	
+	}
+	if (dir == 1)
+	{
+		index = move_x + 5;
+		line = linear_bit[side][1][move_y];
+		border = (border_bit[1][move_y] | linear_bit[side ^ 1][1][move_y]);	
+	}
+	if (dir == 2)
+	{
+		index = move_y + 5;
+		line = linear_bit[side][2][move_x + move_y];
+		border = (border_bit[2][move_x + move_y] | linear_bit[side ^ 1][2][move_x + move_y]);
+	}
+	if (dir == 3)
+	{
+		index = move_y + 5;
+		line = linear_bit[side][3][move_y - move_x + boardSize - 1];
+		border = (border_bit[3][move_y - move_x + boardSize - 1] | linear_bit[side ^ 1][3][move_y - move_x + boardSize - 1]);		
+	}
+
+	if ((border & (1 << index)) || (line & (1 << index)))
+	{
+		return;
+	}
+	if (is_there_a_five(line, index))
+	{
+		if (five_threat == NO_FIVE)
+		{
+			five_threat = m;
+		}
+		else
+		{
+			five_threat = FIVE_WIN;
+		}
+        return;
+	}
+	if (is_there_a_free_four(line, border, index))
+	{
+		threat[side][0][dir].t[m >> 6] |= ((1ULL << (m - ((m >> 6) << 6))));
+		return;
+	}
+	if (is_there_a_four(line, border, index))
+	{
+		threat[side][1][dir].t[m >> 6] |= ((1ULL << (m - ((m >> 6) << 6))));
+		return;
+	}
+	if (is_there_a_three(line, border, index))
+	{
+		threat[side][2][dir].t[m >> 6] |= ((1ULL << (m - ((m >> 6) << 6))));
+		return;
+	}
+	return;
 }
 
 int ThreatHandler::is_there_a_three(uint32_t line, uint32_t border, int index)
@@ -1312,7 +1423,7 @@ bool Location::isCentral(Loc loc, int x_size, int y_size) {
 
 Board::Board()
 {
-  init(19,19);
+  init(20,20);
 }
 
 Board::Board(int x, int y)
@@ -1361,6 +1472,30 @@ void Board::init(int xS, int yS)
   pos_hash = ZOBRIST_SIZE_X_HASH[x_size] ^ ZOBRIST_SIZE_Y_HASH[y_size];
 
   Location::getAdjacentOffsets(adj_offsets,x_size);
+}
+
+bool Board::setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones, int posLen)
+{
+  init(posLen, posLen);
+  num_stones = blackStones.size() + whiteStones.size();
+  for (auto b : blackStones)
+  {
+	int y = b / x_size;
+	int x = b % x_size;
+	Loc loc = (x+1) + (y+1)*(x_size+1);
+	pos_hash ^= ZOBRIST_BOARD_HASH[loc][P_BLACK];
+	colors[loc] = C_BLACK;
+  }
+  for (auto w : whiteStones)
+  {
+	int y = w / x_size;
+	int x = w % x_size;
+	Loc loc = (x+1) + (y+1)*(x_size+1);
+	pos_hash ^= ZOBRIST_BOARD_HASH[loc][P_WHITE];
+	colors[loc] = C_WHITE;
+  }  
+  bool isSanePosition = threatHandler.setStartPosition(blackStones, whiteStones, posLen);
+  return isSanePosition;
 }
 
 void Board::initBoardStruct()
@@ -1569,8 +1704,8 @@ int Location::euclideanDistanceSquared(Loc loc0, Loc loc1, int x_size) {
 char PlayerIO::colorToChar(Color c)
 {
   switch(c) {
-  case C_BLACK: return 'X';
-  case C_WHITE: return 'O';
+  case C_BLACK: return 'O';
+  case C_WHITE: return 'X';
   case C_EMPTY: return '.';
   default:  return '#';
   }
@@ -1800,6 +1935,8 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
     }
     out << "\n";
   }
+  char nextPlayer = ((board.num_stones % 2) == 0) ? PlayerIO::colorToChar(P_BLACK) : PlayerIO::colorToChar(P_WHITE);
+  out << "next=" << nextPlayer << "\n";
   out << "\nThreatHandler\n";
   board.threatHandler.print_board_extended(out);
 

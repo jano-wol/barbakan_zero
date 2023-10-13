@@ -11,7 +11,7 @@
 #include "../core/hash.h"
 
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 19
+#define COMPILE_MAX_BOARD_LEN 20
 #endif
 
 #define MAX_LEN_THREATHANDLER COMPILE_MAX_BOARD_LEN
@@ -175,6 +175,8 @@ struct ThreatHandler
 	ThreatHandler(int boardS, int sixW);
     ThreatHandler(const ThreatHandler& other);
     ThreatHandler& operator=(const ThreatHandler&) = default;
+
+	bool setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones, int posLen);
 	
 	void init(int boardS, int sixW);
 	void print(uint32_t line);
@@ -192,6 +194,7 @@ struct ThreatHandler
 	int is_there_a_free_four (uint32_t line, uint32_t border, int index);
 	int is_there_a_five (uint32_t line, int index);
 	void local_update_of_threats(int m);
+	void update_move_side_dir(int m, int side, int dir);
 
 	// Generate legal moves for the next_player 
 	void generate_legal_moves(int next_player);
@@ -345,6 +348,9 @@ struct Board
 
   //Undo the move given by record. Moves MUST be undone in the order they were made.
   void undo(MoveRecord record);
+
+  // Init start position from a list of black and white stones
+  bool setStartPosition(const std::vector<int>& blackStones, const std::vector<int>& whiteStones, int posLen);
 
   //Get what the position hash would be if we were to play this move.
   //Assumes the move is on an empty location.

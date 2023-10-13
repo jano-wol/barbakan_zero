@@ -279,6 +279,7 @@ add_executable(barbakan_zero
   command/contribute.cpp
   command/evalsgf.cpp
   command/gatekeeper.cpp
+  command/generatennuedata.cpp
   command/gtp.cpp
   command/match.cpp
   command/matchauto.cpp

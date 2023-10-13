@@ -34,6 +34,8 @@ namespace MainCmds {
   int demoplay(int argc, const char* const* argv);
   int printclockinfo(int argc, const char* const* argv);
 
+  int generatennuedata(int argc, const char* const* argv);
+
   int sandbox();
 }
 

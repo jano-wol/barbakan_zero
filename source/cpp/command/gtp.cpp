@@ -395,8 +395,8 @@ struct GTPEngine {
 
     bool wasDefault = false;
     if(boardXSize == -1 || boardYSize == -1) {
-      boardXSize = 19;
-      boardYSize = 19;
+      boardXSize = NNPos::MAX_BOARD_LEN;
+      boardYSize = NNPos::MAX_BOARD_LEN;
       wasDefault = true;
     }
 
