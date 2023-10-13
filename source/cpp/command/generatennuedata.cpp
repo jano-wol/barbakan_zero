@@ -296,10 +296,11 @@ struct GTPEngine
 
   void dumpTargets(const pair<float, vector<float>>& targets, const std::vector<char>& buf, size_t currRow,
                    size_t allRow, std::ofstream& eval, std::ofstream& evalVal, std::ofstream& moveCandidate,
-                   std::ofstream& moveCandidateVal)
+                   std::ofstream& moveCandidateVal, size_t& trainingRowsDumped, size_t& validationRowsDumped)
   {
     std::ofstream& evalWrite = allRow * 0.95 < currRow ? evalVal : eval;
     std::ofstream& moveCandidateWrite = allRow * 0.95 < currRow ? moveCandidateVal : moveCandidate;
+    allRow * 0.95 < currRow ? ++validationRowsDumped : ++trainingRowsDumped;
     float evalNormalizer = 128.0f;           // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
     float moveCandidateNormalizer = 127.0f;  // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
     constexpr size_t trainingRowSize = 512;  // DEFINED in BARBAKAN PROJECT loaders
@@ -494,7 +495,14 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   }
 
   size_t currRow = 0;  // for validation set creation
+  size_t rowsDumped = 0;
+  size_t trainingRowsDumped = 0;
+  size_t validationRowsDumped = 0;
   while (positions.read(&buf[0], bufSize)) {
+    if (currRow % 10000 == 0) {
+      std::cout << "progress=" << currRow / 10000 << "/" << (allRow + 9999) / 10000 << " rowsDumped=" << rowsDumped
+                << "\n";
+    }
     ++currRow;
     std::streamsize bytes = positions.gcount();
     auto b = static_cast<size_t>(bytes);
@@ -523,8 +531,13 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
       continue;
     }
     auto targets = engine->getNNUETargets();
-    engine->dumpTargets(targets, buf, currRow, allRow, eval, evalVal, moveCandidate, moveCandidateVal);
+    engine->dumpTargets(targets, buf, currRow, allRow, eval, evalVal, moveCandidate, moveCandidateVal,
+                        trainingRowsDumped, validationRowsDumped);
+    ++rowsDumped;
   }
+  std::cout << "Ready. rowsDumped=" << rowsDumped << " (trainingRowsDumped=" << trainingRowsDumped
+            << " validationRowsDumped=" << validationRowsDumped << ")\n";
+
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();

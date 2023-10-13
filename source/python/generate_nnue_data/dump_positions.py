@@ -79,7 +79,7 @@ if __name__ == "__main__":
     dump_dir_path = os.path.realpath(dump_dir)
     train_files = [os.path.join(shuffle_dir_path, fname) for fname in os.listdir(shuffle_dir_path) if
                    fname.endswith(".npz")]
-    all_rows_dumped = 0
+    rows_dumped = 0
     dump_file = open(dump_dir_path, "wb")
     for [batch, n, num_whole_steps] in read_batches.read_npz_training_data(
             train_files,
@@ -91,12 +91,13 @@ if __name__ == "__main__":
             randomize_symmetries=True
     ):
         if n % 100 == 0:
-            print(f"steps={n}/{num_whole_steps} all_rows_dumped={all_rows_dumped}")
+            print(f"progress={n // 100}/{(num_whole_steps + 99) // 100} rows_dumped={rows_dumped}")
         curr_batch_size = batch["binaryInputNCHW"].shape[0]
         for idx in range(curr_batch_size):
             p = batch["binaryInputNCHW"][idx][1]
             w = batch["binaryInputNCHW"][idx][2]
             dump_position(p, w)
-            all_rows_dumped += 1
+            rows_dumped += 1
         if n == num_whole_steps - 1:
+            print(f"Ready. total_rows_dumped={rows_dumped}")
             break
