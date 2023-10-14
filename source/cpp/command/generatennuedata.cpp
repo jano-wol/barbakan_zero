@@ -326,6 +326,15 @@ struct DataGeneratorEngine
     params = p;
     bot->setParams(params);
   }
+
+  static void logMessage(const std::string& message)
+  {
+    auto t = std::chrono::system_clock::now();
+    std::time_t t_t = std::chrono::system_clock::to_time_t(t);
+    std::string timeStr(std::ctime(&t_t));
+    timeStr = timeStr.substr(0, timeStr.length() - 1);
+    std::cout << "[" << timeStr << "] " << message << std::endl;
+  }
 };
 }  // namespace datagenerator
 
@@ -486,14 +495,14 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
   size_t bufSize = 2 * posLen * posLen;
   std::vector<char> buf(bufSize);
-  size_t allRow = 0;
+  size_t allRows = 0;
   {
     ifstream in(positionsPath, ifstream::ate | ifstream::binary);
     size_t fileSize = in.tellg();
     if (fileSize % bufSize != 0) {
       ASSERT_UNREACHABLE;
     }
-    allRow = fileSize / bufSize;
+    allRows = fileSize / bufSize;
   }
 
   size_t currRow = 0;  // for validation set creation
@@ -502,8 +511,9 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   size_t validationRowsDumped = 0;
   while (positions.read(&buf[0], bufSize)) {
     if (currRow % 10000 == 0) {
-      std::cout << "progress=" << currRow / 10000 << "/" << (allRow + 9999) / 10000 << " rowsDumped=" << rowsDumped
-                << "\n";
+      ss.str("");
+      ss << "rowsDumped/allRows=" << rowsDumped << "/" << allRows;
+      datagenerator::DataGeneratorEngine::logMessage(ss.str());
     }
     ++currRow;
     std::streamsize bytes = positions.gcount();
@@ -533,13 +543,14 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
       continue;
     }
     auto targets = engine->getNNUETargets();
-    engine->dumpTargets(targets, buf, currRow, allRow, eval, evalVal, moveCandidate, moveCandidateVal,
+    engine->dumpTargets(targets, buf, currRow, allRows, eval, evalVal, moveCandidate, moveCandidateVal,
                         trainingRowsDumped, validationRowsDumped);
     ++rowsDumped;
   }
-  std::cout << "Ready. rowsDumped=" << rowsDumped << " (trainingRowsDumped=" << trainingRowsDumped
-            << " validationRowsDumped=" << validationRowsDumped << ")\n";
-
+  ss.str("");
+  ss << "Ready. rowsDumped=" << rowsDumped << " (trainingRowsDumped=" << trainingRowsDumped
+     << " validationRowsDumped=" << validationRowsDumped << ")\n";
+  datagenerator::DataGeneratorEngine::logMessage(ss.str());
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();

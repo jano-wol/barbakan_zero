@@ -21,6 +21,6 @@ fi
 cp "${BINARY_PATH}" "${GENERATE_NNUE_DATA_OUT}"
 cp "${CONFIG_PATH}" "${GENERATE_NNUE_DATA_OUT}"
 cp "${MODEL_PATH}" "${GENERATE_NNUE_DATA_OUT}"
-${SOURCE_FOLDER}/scripts/misc/generate_nnue_data/generate.sh ${BUILD_TEST_DATA_FOLDER}/generate_nnue_data ${GENERATE_NNUE_DATA_OUT} 300000 20 ${GENERATE_NNUE_DATA_OUT}
+${SOURCE_FOLDER}/scripts/misc/generate_nnue_data/generate.sh ${BUILD_TEST_DATA_FOLDER}/generate_nnue_data ${GENERATE_NNUE_DATA_OUT} 15000 20 ${GENERATE_NNUE_DATA_OUT}
 
 

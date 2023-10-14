@@ -6,6 +6,11 @@ import logging
 import torch.multiprocessing
 import read_batches
 
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
 
 def print_position(player_stones, waiter_stones):
     board_size = player_stones.shape[0]
@@ -62,25 +67,27 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=description, add_help=False)
     required_args = parser.add_argument_group('required arguments')
     required_args.add_argument('-shuffle-dir', help='output by shuffle.py', required=True)
-    required_args.add_argument('-dump-dir', help='output by shuffle.py', required=True)
+    required_args.add_argument('-dump-file', help='output by shuffle.py', required=True)
     required_args.add_argument('-pos-len', help='Spatial edge length of expected training data, e.g. 19 for 19x19 Go',
                                type=int, required=True)
     required_args.add_argument('-batch-size', help='Per-GPU batch size to use for training', type=int, required=True)
+    required_args.add_argument('-target', help='Number of dumped positions', type=int, required=True)
     args = vars(parser.parse_args())
     rank = 0
     barrier = None
     shuffle_dir = args["shuffle_dir"]
-    dump_dir = args["dump_dir"]
+    dump_file_str = args["dump_file"]
     pos_len = args["pos_len"]
     batch_size = args["batch_size"]
+    target = args["target"]
     logging.info(str(sys.argv))
     device = torch.device("cpu")
     shuffle_dir_path = os.path.realpath(shuffle_dir)
-    dump_dir_path = os.path.realpath(dump_dir)
+    dump_file_path = os.path.realpath(dump_file_str)
     train_files = [os.path.join(shuffle_dir_path, fname) for fname in os.listdir(shuffle_dir_path) if
                    fname.endswith(".npz")]
-    rows_dumped = 0
-    dump_file = open(dump_dir_path, "wb")
+    positions_dumped = 0
+    dump_file = open(dump_file_path, "wb")
     for [batch, n, num_whole_steps] in read_batches.read_npz_training_data(
             train_files,
             batch_size,
@@ -90,14 +97,15 @@ if __name__ == "__main__":
             device=device,
             randomize_symmetries=True
     ):
-        if n % 100 == 0:
-            print(f"progress={n // 100}/{(num_whole_steps + 99) // 100} rows_dumped={rows_dumped}")
         curr_batch_size = batch["binaryInputNCHW"].shape[0]
         for idx in range(curr_batch_size):
+            if positions_dumped % 10000 == 0:
+                logging.info(f"positions_dumped/target={positions_dumped}/{target}")
             p = batch["binaryInputNCHW"][idx][1]
             w = batch["binaryInputNCHW"][idx][2]
             dump_position(p, w)
-            rows_dumped += 1
-        if n == num_whole_steps - 1:
-            print(f"Ready. total_rows_dumped={rows_dumped}")
-            break
+            positions_dumped += 1
+            if positions_dumped >= target:
+                logging.info(f"target reached. positions_dumped={positions_dumped}")
+                exit(0)
+    logging.info(f"all lines were dumped. Target was not reached. positions_dumped/target={positions_dumped}/{target}")
