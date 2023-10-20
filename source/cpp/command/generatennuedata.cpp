@@ -296,27 +296,95 @@ struct DataGeneratorEngine
     return ret;
   }
 
-  void dumpTargets(const pair<float, vector<float>>& targets, const std::vector<char>& buf, size_t currRow,
-                   size_t allRow, std::ofstream& eval, std::ofstream& evalVal, std::ofstream& moveCandidate,
-                   std::ofstream& moveCandidateVal, size_t& trainingRowsDumped, size_t& validationRowsDumped)
+  pair<pair<float, vector<float>>, std::vector<char>> actF(const pair<float, vector<float>>& targets,
+                                                           const vector<char>& buf, int posLen)
   {
-    std::ofstream& evalWrite = allRow * 0.95 < currRow ? evalVal : eval;
-    std::ofstream& moveCandidateWrite = allRow * 0.95 < currRow ? moveCandidateVal : moveCandidate;
-    allRow * 0.95 < currRow ? ++validationRowsDumped : ++trainingRowsDumped;
+    vector<float> targetsRet(targets.second.size());
+    vector<char> bufRet(buf.size());
+
+    for (int i = 0; i < posLen * posLen; ++i) {
+      int x = i / posLen;
+      int y = i % posLen;
+      int xNew = y;
+      int yNew = posLen - 1 - x;
+      int iNew = xNew * posLen + yNew;
+      targetsRet[iNew] = targets.second[i];
+      bufRet[iNew] = buf[i];
+      bufRet[iNew + posLen * posLen] = buf[i + posLen * posLen];
+    }
+    return {{targets.first, targetsRet}, bufRet};
+  }
+
+  pair<pair<float, vector<float>>, std::vector<char>> actT(const pair<float, vector<float>>& targets,
+                                                           const vector<char>& buf, int posLen)
+  {
+    vector<float> targetsRet(targets.second.size());
+    vector<char> bufRet(buf.size());
+
+    for (int i = 0; i < posLen * posLen; ++i) {
+      int x = i / posLen;
+      int y = i % posLen;
+      int xNew = x;
+      int yNew = posLen - 1 - y;
+      int iNew = xNew * posLen + yNew;
+      targetsRet[iNew] = targets.second[i];
+      bufRet[iNew] = buf[i];
+      bufRet[iNew + posLen * posLen] = buf[i + posLen * posLen];
+    }
+    return {{targets.first, targetsRet}, bufRet};
+  }
+
+  pair<pair<float, vector<float>>, vector<char>> actD4(const pair<float, vector<float>>& targets,
+                                                       const vector<char>& buf, size_t symm, int posLen)
+  {
+    auto t = symm / 4;
+    auto f = symm % 4;
+    pair<float, vector<float>> currTargets = targets;
+    std::vector<char> currBuf = buf;
+    for (int i = 0; i < f; ++i) {
+      auto curr = actF(currTargets, currBuf, posLen);
+      currTargets = curr.first;
+      currBuf = curr.second;
+    }
+    for (int i = 0; i < t; ++i) {
+      auto curr = actT(currTargets, currBuf, posLen);
+      currTargets = curr.first;
+      currBuf = curr.second;
+    }
+    return {currTargets, currBuf};
+  }
+
+  void dumpTargets(const pair<float, vector<float>>& targets, const std::vector<char>& buf, size_t currReadRow,
+                   size_t allReadRow, std::ofstream& eval, std::ofstream& evalVal, std::ofstream& moveCandidate,
+                   std::ofstream& moveCandidateVal, size_t& trainingRowsDumped, size_t& validationRowsDumped,
+                   int posLen)
+  {
+    size_t D4Size = 8;
+    std::ofstream& evalWrite = allReadRow * 0.95 < currReadRow ? evalVal : eval;
+    std::ofstream& moveCandidateWrite = allReadRow * 0.95 < currReadRow ? moveCandidateVal : moveCandidate;
+    if (allReadRow * 0.95 < currReadRow) {
+      validationRowsDumped += D4Size;
+    } else {
+      trainingRowsDumped += D4Size;
+    }
     float evalNormalizer = 128.0f;           // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
     float moveCandidateNormalizer = 127.0f;  // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
     constexpr size_t trainingRowSize = 512;  // DEFINED in BARBAKAN PROJECT loaders
-    auto packedPos = getPackedPos(buf);
-    std::vector<uint8_t> dumpEval;
-    dumpEval.push_back(static_cast<uint8_t>(targets.first * evalNormalizer + 0.5f));
-    std::vector<uint8_t> dumpMoveDist;
-    for (auto f : targets.second) {
-      dumpMoveDist.push_back(static_cast<uint8_t>(f * moveCandidateNormalizer + 0.5f));
+
+    for (int symm = 0; symm < D4Size; ++symm) {
+      auto symmetrizedTarBuf = actD4(targets, buf, symm, posLen);
+      auto packedPos = getPackedPos(symmetrizedTarBuf.second);
+      std::vector<uint8_t> dumpEval;
+      dumpEval.push_back(static_cast<uint8_t>(symmetrizedTarBuf.first.first * evalNormalizer + 0.5f));
+      std::vector<uint8_t> dumpMoveDist;
+      for (auto f : symmetrizedTarBuf.first.second) {
+        dumpMoveDist.push_back(static_cast<uint8_t>(f * moveCandidateNormalizer + 0.5f));
+      }
+      auto evalTrainingRow = getTrainingRow(packedPos, dumpEval, trainingRowSize);
+      auto moveCandidateTrainingRow = getTrainingRow(packedPos, dumpMoveDist, trainingRowSize);
+      evalWrite.write(reinterpret_cast<const char*>(evalTrainingRow.data()), trainingRowSize);
+      moveCandidateWrite.write(reinterpret_cast<const char*>(moveCandidateTrainingRow.data()), trainingRowSize);
     }
-    auto evalTrainingRow = getTrainingRow(packedPos, dumpEval, trainingRowSize);
-    auto moveCandidateTrainingRow = getTrainingRow(packedPos, dumpMoveDist, trainingRowSize);
-    evalWrite.write(reinterpret_cast<const char*>(evalTrainingRow.data()), trainingRowSize);
-    moveCandidateWrite.write(reinterpret_cast<const char*>(moveCandidateTrainingRow.data()), trainingRowSize);
   }
 
   SearchParams getParams() { return params; }
@@ -495,27 +563,26 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
   size_t bufSize = 2 * posLen * posLen;
   std::vector<char> buf(bufSize);
-  size_t allRows = 0;
+  size_t allReadRows = 0;
   {
     ifstream in(positionsPath, ifstream::ate | ifstream::binary);
     size_t fileSize = in.tellg();
     if (fileSize % bufSize != 0) {
       ASSERT_UNREACHABLE;
     }
-    allRows = fileSize / bufSize;
+    allReadRows = fileSize / bufSize;
   }
 
-  size_t currRow = 0;  // for validation set creation
-  size_t rowsDumped = 0;
+  size_t currReadRow = 0;  // for validation set creation
   size_t trainingRowsDumped = 0;
   size_t validationRowsDumped = 0;
   while (positions.read(&buf[0], bufSize)) {
-    if (currRow % 10000 == 0) {
+    if (currReadRow % 10000 == 0) {
       ss.str("");
-      ss << "rowsDumped/allRows=" << rowsDumped << "/" << allRows;
+      ss << "currReadRow/allReadRows=" << currReadRow << "/" << allReadRows;
       datagenerator::DataGeneratorEngine::logMessage(ss.str());
     }
-    ++currRow;
+    ++currReadRow;
     std::streamsize bytes = positions.gcount();
     auto b = static_cast<size_t>(bytes);
     if (b != bufSize) {
@@ -543,13 +610,12 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
       continue;
     }
     auto targets = engine->getNNUETargets();
-    engine->dumpTargets(targets, buf, currRow, allRows, eval, evalVal, moveCandidate, moveCandidateVal,
-                        trainingRowsDumped, validationRowsDumped);
-    ++rowsDumped;
+    engine->dumpTargets(targets, buf, currReadRow, allReadRows, eval, evalVal, moveCandidate, moveCandidateVal,
+                        trainingRowsDumped, validationRowsDumped, posLen);
   }
   ss.str("");
-  ss << "Ready. rowsDumped=" << rowsDumped << " (trainingRowsDumped=" << trainingRowsDumped
-     << " validationRowsDumped=" << validationRowsDumped << ")\n";
+  ss << "Ready. rowsDumped=" << trainingRowsDumped + validationRowsDumped
+     << " (trainingRowsDumped=" << trainingRowsDumped << " validationRowsDumped=" << validationRowsDumped << ")\n";
   datagenerator::DataGeneratorEngine::logMessage(ss.str());
   delete engine;
   engine = NULL;
