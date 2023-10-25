@@ -15,6 +15,12 @@ using namespace std;
 
 namespace datagenerator
 {
+constexpr float evalNormalizer = 128.0f;           // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
+constexpr float moveCandidateNormalizer = 127.0f;  // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
+constexpr size_t trainingRowSize = 512;            // DEFINED in BARBAKAN PROJECT loaders
+constexpr size_t D4Size = 8;
+constexpr float trainRatio = 0.95f;
+
 struct DataGeneratorEngine
 {
   DataGeneratorEngine(const DataGeneratorEngine&) = delete;
@@ -285,8 +291,7 @@ struct DataGeneratorEngine
     return ret;
   }
 
-  std::vector<uint8_t> getTrainingRow(std::vector<uint8_t> packedPos, std::vector<uint8_t> target,
-                                      size_t trainingRowSize)
+  std::vector<uint8_t> getTrainingRow(std::vector<uint8_t> packedPos, std::vector<uint8_t> target)
   {
     auto ret = packedPos;
     ret.insert(ret.end(), target.begin(), target.end());
@@ -354,23 +359,9 @@ struct DataGeneratorEngine
     return {currTargets, currBuf};
   }
 
-  void dumpTargets(const pair<float, vector<float>>& targets, const std::vector<char>& buf, size_t currReadRow,
-                   size_t allReadRow, std::ofstream& eval, std::ofstream& evalVal, std::ofstream& moveCandidate,
-                   std::ofstream& moveCandidateVal, size_t& trainingRowsDumped, size_t& validationRowsDumped,
-                   int posLen)
+  void dumpTargets(const pair<float, vector<float>>& targets, const std::vector<char>& buf, std::ofstream& evalTmp,
+                   std::ofstream& moveCandidateTmp, int posLen)
   {
-    size_t D4Size = 8;
-    std::ofstream& evalWrite = allReadRow * 0.95 < currReadRow ? evalVal : eval;
-    std::ofstream& moveCandidateWrite = allReadRow * 0.95 < currReadRow ? moveCandidateVal : moveCandidate;
-    if (allReadRow * 0.95 < currReadRow) {
-      validationRowsDumped += D4Size;
-    } else {
-      trainingRowsDumped += D4Size;
-    }
-    float evalNormalizer = 128.0f;           // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
-    float moveCandidateNormalizer = 127.0f;  // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
-    constexpr size_t trainingRowSize = 512;  // DEFINED in BARBAKAN PROJECT loaders
-
     for (int symm = 0; symm < D4Size; ++symm) {
       auto symmetrizedTarBuf = actD4(targets, buf, symm, posLen);
       auto packedPos = getPackedPos(symmetrizedTarBuf.second);
@@ -380,10 +371,10 @@ struct DataGeneratorEngine
       for (auto f : symmetrizedTarBuf.first.second) {
         dumpMoveDist.push_back(static_cast<uint8_t>(f * moveCandidateNormalizer + 0.5f));
       }
-      auto evalTrainingRow = getTrainingRow(packedPos, dumpEval, trainingRowSize);
-      auto moveCandidateTrainingRow = getTrainingRow(packedPos, dumpMoveDist, trainingRowSize);
-      evalWrite.write(reinterpret_cast<const char*>(evalTrainingRow.data()), trainingRowSize);
-      moveCandidateWrite.write(reinterpret_cast<const char*>(moveCandidateTrainingRow.data()), trainingRowSize);
+      auto evalTrainingRow = getTrainingRow(packedPos, dumpEval);
+      auto moveCandidateTrainingRow = getTrainingRow(packedPos, dumpMoveDist);
+      evalTmp.write(reinterpret_cast<const char*>(evalTrainingRow.data()), trainingRowSize);
+      moveCandidateTmp.write(reinterpret_cast<const char*>(moveCandidateTrainingRow.data()), trainingRowSize);
     }
   }
 
@@ -402,6 +393,124 @@ struct DataGeneratorEngine
     std::string timeStr(std::ctime(&t_t));
     timeStr = timeStr.substr(0, timeStr.length() - 1);
     std::cout << "[" << timeStr << "] " << message << std::endl;
+  }
+
+  static std::string getEvalTmpPath(const string& outputDir)
+  {
+    stringstream ss;
+    ss.str("");
+    ss << outputDir << "eval_tmp.bin";
+    return ss.str();
+  }
+
+  static std::string getMoveCandidateTmpPath(const string& outputDir)
+  {
+    stringstream ss;
+    ss.str("");
+    ss << outputDir << "move_candidate_tmp.bin";
+    return ss.str();
+  }
+
+  static void shuffleData(const string& outputDir)
+  {
+    stringstream ss;
+    ss.str("");
+    ss << "Shuffle data\n";
+    DataGeneratorEngine::logMessage(ss.str());
+    string evalTmpPath = getEvalTmpPath(outputDir);
+    string moveCandidateTmpPath = getMoveCandidateTmpPath(outputDir);
+    ss.str("");
+    ss << outputDir << "eval.bin";
+    string evalPath = ss.str();
+    ss.str("");
+    ss << outputDir << "eval_val.bin";
+    string evalValPath = ss.str();
+    ss.str("");
+    ss << outputDir << "move_candidate.bin";
+    string moveCandidatePath = ss.str();
+    ss.str("");
+    ss << outputDir << "move_candidate_val.bin";
+    string moveCandidateValPath = ss.str();
+    std::ifstream evalTmp(evalTmpPath, std::ios::binary);
+    std::ifstream moveCandidateTmp(moveCandidateTmpPath, std::ios::binary);
+    std::ofstream eval(evalPath, std::ios::binary);
+    std::ofstream evalVal(evalValPath, std::ios::binary);
+    std::ofstream moveCandidate(moveCandidatePath, std::ios::binary);
+    std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
+
+    size_t allReadRows1 = 0;
+    {
+      ifstream in(evalTmpPath, ifstream::ate | ifstream::binary);
+      size_t fileSize = in.tellg();
+      if (fileSize % trainingRowSize != 0) {
+        ASSERT_UNREACHABLE;
+      }
+      allReadRows1 = fileSize / trainingRowSize;
+    }
+    size_t allReadRows2 = 0;
+    {
+      ifstream in(moveCandidateTmpPath, ifstream::ate | ifstream::binary);
+      size_t fileSize = in.tellg();
+      if (fileSize % trainingRowSize != 0) {
+        ASSERT_UNREACHABLE;
+      }
+      allReadRows2 = fileSize / trainingRowSize;
+    }
+    if (allReadRows1 != allReadRows2) {
+      ASSERT_UNREACHABLE;
+    }
+    size_t allReadRows = allReadRows1;
+    vector<size_t> perm;
+    perm.reserve(allReadRows);
+    std::srand(unsigned(std::time(0)));
+    for (size_t i = 0; i < allReadRows; ++i) {
+      perm.push_back(i);
+    }
+    ss.str("");
+    ss << "shuffle choose start\n";
+    DataGeneratorEngine::logMessage(ss.str());
+    std::random_shuffle(perm.begin(), perm.end());
+    ss.str("");
+    ss << "shuffle is choosen\n";
+    DataGeneratorEngine::logMessage(ss.str());
+    std::vector<char> bufEval(trainingRowSize);
+    std::vector<char> bufMoveCandidate(trainingRowSize);
+    size_t trainingRowsDumped = 0;
+    size_t validationRowsDumped = 0;
+    for (size_t idx = 0; idx < perm.size(); ++idx) {
+      if (idx % 10000 == 0) {
+        ss.str("");
+        ss << "currShuffe/allShuffle=" << idx << "/" << perm.size();
+        DataGeneratorEngine::logMessage(ss.str());
+      }
+      size_t p = perm[idx];
+      evalTmp.seekg(p * trainingRowSize, ios::beg);
+      moveCandidateTmp.seekg(p * trainingRowSize, ios::beg);
+      evalTmp.read(&bufEval[0], trainingRowSize);
+      moveCandidateTmp.read(&bufMoveCandidate[0], trainingRowSize);
+      if (idx < perm.size() * trainRatio) {
+        eval.write(reinterpret_cast<const char*>(bufEval.data()), trainingRowSize);
+        moveCandidate.write(reinterpret_cast<const char*>(bufMoveCandidate.data()), trainingRowSize);
+        ++trainingRowsDumped;
+      } else {
+        evalVal.write(reinterpret_cast<const char*>(bufEval.data()), trainingRowSize);
+        moveCandidateVal.write(reinterpret_cast<const char*>(bufMoveCandidate.data()), trainingRowSize);
+        ++validationRowsDumped;
+      }
+    }
+    ss.str("");
+    ss << "Shuffle ready. rowsDumped=" << trainingRowsDumped + validationRowsDumped
+       << " (trainingRowsDumped=" << trainingRowsDumped << " validationRowsDumped=" << validationRowsDumped << ")\n";
+    datagenerator::DataGeneratorEngine::logMessage(ss.str());
+    ss.str("");
+    ss << "Clean tmp files\n";
+    datagenerator::DataGeneratorEngine::logMessage(ss.str());
+    evalTmp.close();
+    moveCandidateTmp.close();
+    std::ofstream cleanEvalTmp(evalTmpPath, std::ofstream::out | std::ofstream::trunc);
+    std::ofstream cleanMoveCandidateTmp(moveCandidateTmpPath, std::ofstream::out | std::ofstream::trunc);
+    cleanEvalTmp.close();
+    cleanMoveCandidateTmp.close();
   }
 };
 }  // namespace datagenerator
@@ -543,24 +652,11 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   ss.str("");
   ss << outputDir << "dump_positions_out";
   string positionsPath = ss.str();
-  ss.str("");
-  ss << outputDir << "move_candidate.bin";
-  string moveCandidatePath = ss.str();
-  ss.str("");
-  ss << outputDir << "move_candidate_val.bin";
-  string moveCandidateValPath = ss.str();
-  ss.str("");
-  ss << outputDir << "eval.bin";
-  string evalPath = ss.str();
-  ss.str("");
-  ss << outputDir << "eval_val.bin";
-  string evalValPath = ss.str();
-
+  string evalTmpPath = datagenerator::DataGeneratorEngine::getEvalTmpPath(outputDir);
+  string moveCandidateTmpPath = datagenerator::DataGeneratorEngine::getMoveCandidateTmpPath(outputDir);
   std::ifstream positions(positionsPath, std::ios::binary);
-  std::ofstream eval(evalPath, std::ios::binary);
-  std::ofstream evalVal(evalValPath, std::ios::binary);
-  std::ofstream moveCandidate(moveCandidatePath, std::ios::binary);
-  std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
+  std::ofstream evalTmp(evalTmpPath, std::ios::binary);
+  std::ofstream moveCandidateTmp(moveCandidateTmpPath, std::ios::binary);
   size_t bufSize = 2 * posLen * posLen;
   std::vector<char> buf(bufSize);
   size_t allReadRows = 0;
@@ -574,8 +670,7 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   }
 
   size_t currReadRow = 0;  // for validation set creation
-  size_t trainingRowsDumped = 0;
-  size_t validationRowsDumped = 0;
+  size_t rowsDumped = 0;
   while (positions.read(&buf[0], bufSize)) {
     if (currReadRow % 10000 == 0) {
       ss.str("");
@@ -610,17 +705,15 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
       continue;
     }
     auto targets = engine->getNNUETargets();
-    engine->dumpTargets(targets, buf, currReadRow, allReadRows, eval, evalVal, moveCandidate, moveCandidateVal,
-                        trainingRowsDumped, validationRowsDumped, posLen);
+    engine->dumpTargets(targets, buf, evalTmp, moveCandidateTmp, posLen);
+    rowsDumped += datagenerator::D4Size;
   }
   ss.str("");
-  ss << "Ready. rowsDumped=" << trainingRowsDumped + validationRowsDumped
-     << " (trainingRowsDumped=" << trainingRowsDumped << " validationRowsDumped=" << validationRowsDumped << ")\n";
+  ss << "Ready. rowsDumped=" << rowsDumped << "/n";
   datagenerator::DataGeneratorEngine::logMessage(ss.str());
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();
-
-  logger.write("All cleaned up, quitting");
+  datagenerator::DataGeneratorEngine::shuffleData(outputDir);
   return 0;
 }
