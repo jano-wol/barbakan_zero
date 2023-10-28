@@ -878,7 +878,7 @@ void NNInputs::fillRowV6(
 
 
 void NNInputs::fillRowV7(
-  const Board& board, const BoardHistory& hist, Player nextPlayer,
+  const Board& board, const BoardHistory& /*hist*/, Player nextPlayer,
   const MiscNNInputParams& /*nnInputParams*/,
   int nnXLen, int nnYLen, bool useNHWC, float* rowBin, float* rowGlobal
 ) {
