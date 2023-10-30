@@ -660,31 +660,15 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   size_t bufSize = 2 * posLen * posLen;
   std::vector<char> buf(bufSize);
   size_t allReadRows = 0;
-  {
-    ifstream in(positionsPath, ifstream::ate | ifstream::binary);
-    size_t fileSize = in.tellg();
-    if (fileSize % bufSize != 0) {
-      ASSERT_UNREACHABLE;
-    }
-    allReadRows = fileSize / bufSize;
-  }
-
   size_t currReadRow = 0;  // for validation set creation
   size_t rowsDumped = 0;
-  while (positions.read(&buf[0], bufSize)) {
+  while (true) {
     if (currReadRow % 10000 == 0) {
       ss.str("");
       ss << "currReadRow/allReadRows=" << currReadRow << "/" << allReadRows;
       datagenerator::DataGeneratorEngine::logMessage(ss.str());
     }
     ++currReadRow;
-    std::streamsize bytes = positions.gcount();
-    auto b = static_cast<size_t>(bytes);
-    if (b != bufSize) {
-      std::cerr << "Failure while reading " << positionsPath << ". b=" << b << " expected=" << bufSize << "\n";
-      exit(1);
-    }
-
     std::vector<int> player;
     std::vector<int> waiter;
 /*     for (int idx = 0; idx < posLen * posLen; ++idx) {
