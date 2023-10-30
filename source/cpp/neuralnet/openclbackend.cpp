@@ -36,7 +36,7 @@ using half_t = half_float::half;
 */
 
 //Define this to print out some of the intermediate values of the neural net
-//#define DEBUG_INTERMEDIATE_VALUES
+#define DEBUG_INTERMEDIATE_VALUES
 
 //Define this to try profiling some kernels
 //#define PROFILE_KERNELS
@@ -770,6 +770,28 @@ static void debugPrint4D(const string& name, ComputeHandleInternal* handle, cl_m
   }
   cout << "=========================================================" << endl;
 }
+
+static void debugPrintChannel(float* buf, int channelIdx, int posLen) {
+  std::cout << "channelIdx=" << channelIdx << "\n";
+  for (int i = channelIdx * posLen * posLen; i < (channelIdx + 1) * posLen * posLen; ++i)
+  {
+    std::cout << buf[i];
+    if (i % posLen == posLen - 1)
+    {
+      std::cout << "\n";
+    }
+  }
+  std::cout << "------------\n";
+}
+
+
+static void debugPrintChannels(float* buf, int numChannels, int posLen) {
+  for (int i = 0; i < numChannels; ++i)
+  {
+    debugPrintChannel(buf, i, posLen);
+  }
+}
+
 #endif
 
 //--------------------------------------------------------------
@@ -2815,6 +2837,7 @@ void NeuralNet::getOutput(
     SymmetryHelpers::copyInputsWithSymmetry(rowSpatial, rowSpatialInput, 1, nnYLen, nnXLen, numSpatialFeatures, gpuHandle->inputsUseNHWC, inputBufs[nIdx]->symmetry);
   }
 
+  debugPrintChannels(inputBuffers->userInputBuffer, 22, nnXLen);
   Buffers* buffers = gpuHandle->buffers.get();
 
   assert(inputBuffers->userInputBufferElts == buffers->inputElts);

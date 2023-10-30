@@ -687,14 +687,19 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
 
     std::vector<int> player;
     std::vector<int> waiter;
-    for (int idx = 0; idx < posLen * posLen; ++idx) {
+/*     for (int idx = 0; idx < posLen * posLen; ++idx) {
       if (buf[idx] == 1) {
         player.push_back(idx);
       }
       if (buf[idx + posLen * posLen] == 1) {
         waiter.push_back(idx);
       }
-    }
+    } */
+    player.push_back(191);
+    player.push_back(189);
+    waiter.push_back(210);
+    waiter.push_back(231);
+    waiter.push_back(252);
     bool isSanePosition = true;
     if (((player.size() + waiter.size()) % 2) == 0) {
       isSanePosition = engine->setPosition(player, waiter, posLen);
