@@ -68,7 +68,7 @@ def main(args):
     checkpoint_file = args["checkpoint"]
     pos_len = args["pos_len"]
     batch_size = args["batch_size"]
-    use_swa = args["use_swa"]
+    use_swa = True
     gpu_idx = args["gpu_idx"]
 
     soft_policy_weight_scale = 1.0
@@ -106,32 +106,12 @@ def main(args):
 
     # LOAD MODEL ---------------------------------------------------------------------
 
-    if checkpoint_file is None:
-        logging.info("Initializing new model since no checkpoint provided")
-        assert (model_kind is None) != (
-                config_file is None), "Must provide exactly one of -model-kind and -config if no checkpoint"
-
-        if model_kind is not None:
-            model_config = modelconfigs.config_of_name[model_kind]
-        else:
-            with open(config_file, "r") as f:
-                model_config = json.load(f)
-        logging.info(str(model_config))
-
-        model = Model(model_config, pos_len)
-        model.initialize()
-        model.to(device)
-    else:
-        model, swa_model, _ = load_model(checkpoint_file, use_swa, device=device, pos_len=pos_len, verbose=True)
-        model_config = model.config
-
-    metrics_obj = Metrics(batch_size, world_size, model)
-
+    model, swa_model, _ = load_model(checkpoint_file, use_swa, device=device, pos_len=pos_len, verbose=True)
     logging.info("Beginning test!")
     with torch.no_grad():
         moves = [210, 191, 231, 189, 252]
         [binary_input_nchw, global_input_nc] = get_input_tensors(moves, pos_len)
-        model_outputs = model(binary_input_nchw.cuda(), global_input_nc.cuda())
+        model_outputs = swa_model(binary_input_nchw.cuda(), global_input_nc.cuda())
         print(model_outputs)
 
 
