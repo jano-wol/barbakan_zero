@@ -95,6 +95,9 @@ struct NNOutput {
   float whiteWinProb;
   float whiteLossProb;
   float whiteNoResultProb;
+  float rawWinLogit;
+  float rawLossLogit;
+  float rawNoResultLogit;
 
   //The first two moments of the believed distribution of the expected score at the end of the game, from white's perspective.
   float whiteScoreMean;
@@ -111,6 +114,7 @@ struct NNOutput {
   //Indexed by pos rather than loc
   //Values in here will be set to negative for illegal moves, including superko
   float policyProbs[NNPos::MAX_NN_POLICY_SIZE];
+  float rawPolicyLogits[NNPos::MAX_NN_POLICY_SIZE];
 
   int nnXLen;
   int nnYLen;

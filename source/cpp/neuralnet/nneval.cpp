@@ -615,6 +615,7 @@ void NNEvaluator::evaluate(
   }
   else {
     float* policy = buf.result->policyProbs;
+    std::memcpy(buf.result->rawPolicyLogits, buf.result->policyProbs, sizeof(float) * NNPos::MAX_NN_POLICY_SIZE);
 
     float nnPolicyInvTemperature = 1.0f / nnInputParams.nnPolicyTemperature;
 
@@ -700,8 +701,11 @@ void NNEvaluator::evaluate(
       double scoreValue = atan(buf.result->whiteScoreMean) * twoOverPi;
       {
         double winLogits = buf.result->whiteWinProb;
+        buf.result->rawWinLogit = buf.result->whiteWinProb;
         double lossLogits = buf.result->whiteLossProb;
+        buf.result->rawLossLogit = buf.result->whiteLossProb;
         double noResultLogits = buf.result->whiteNoResultProb;
+        buf.result->rawNoResultLogit = buf.result->whiteNoResultProb;
 
         //Softmax
         double maxLogits = std::max(std::max(winLogits,lossLogits),noResultLogits);
