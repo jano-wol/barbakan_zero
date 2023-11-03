@@ -660,30 +660,41 @@ int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
   size_t bufSize = 2 * posLen * posLen;
   std::vector<char> buf(bufSize);
   size_t allReadRows = 0;
+  {
+    ifstream in(positionsPath, ifstream::ate | ifstream::binary);
+    size_t fileSize = in.tellg();
+    if (fileSize % bufSize != 0) {
+      ASSERT_UNREACHABLE;
+    }
+    allReadRows = fileSize / bufSize;
+  }
+
   size_t currReadRow = 0;  // for validation set creation
   size_t rowsDumped = 0;
-  while (true) {
+  while (positions.read(&buf[0], bufSize)) {
     if (currReadRow % 10000 == 0) {
       ss.str("");
       ss << "currReadRow/allReadRows=" << currReadRow << "/" << allReadRows;
       datagenerator::DataGeneratorEngine::logMessage(ss.str());
     }
     ++currReadRow;
+    std::streamsize bytes = positions.gcount();
+    auto b = static_cast<size_t>(bytes);
+    if (b != bufSize) {
+      std::cerr << "Failure while reading " << positionsPath << ". b=" << b << " expected=" << bufSize << "\n";
+      exit(1);
+    }
+
     std::vector<int> player;
     std::vector<int> waiter;
-/*     for (int idx = 0; idx < posLen * posLen; ++idx) {
+    for (int idx = 0; idx < posLen * posLen; ++idx) {
       if (buf[idx] == 1) {
         player.push_back(idx);
       }
       if (buf[idx + posLen * posLen] == 1) {
         waiter.push_back(idx);
       }
-    } */
-    player.push_back(191);
-    player.push_back(189);
-    waiter.push_back(210);
-    waiter.push_back(231);
-    waiter.push_back(252);
+    }
     bool isSanePosition = true;
     if (((player.size() + waiter.size()) % 2) == 0) {
       isSanePosition = engine->setPosition(player, waiter, posLen);
