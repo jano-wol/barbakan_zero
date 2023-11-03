@@ -3,6 +3,7 @@
 #include "../core/datetime.h"
 #include "../core/global.h"
 #include "../core/makedir.h"
+#include "../core/paths.h"
 #include "../core/timer.h"
 #include "../dataio/sgf.h"
 #include "../main.h"
@@ -518,8 +519,8 @@ struct NNUEOutputEngine
 int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
 {
   Board::initBoardStruct();
-  string outputDir(argv[1]);
-  string posLenStr(argv[2]);
+  string outputDir = barbakan_zero::getBuildTestDataFolder();
+  string posLenStr(argv[1]);
   int posLen = stoi(posLenStr);
   Rand seedRand;
 
@@ -538,10 +539,12 @@ int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
                                                false, string(), "VERSION");
     cmd.add(overrideVersionArg);
     // cmd.parse(argc, argv);
-    nnModelFile = cmd.getModelFile();
+    nnModelFile = barbakan_zero::getBuildDataFolder() + "model/test_nnue_output_model.bin.gz";
+    std::cout << nnModelFile << "\n";
     overrideVersion = overrideVersionArg.getValue();
 
-    cmd.getConfig(cfg);
+    std::string cfgPath = barbakan_zero::getBuildDataFolder() + "configs/gtp/default_gtp.cfg";
+    cmd.getConfig(cfg, cfgPath);
   } catch (TCLAP::ArgException& e) {
     cerr << "Error: " << e.error() << " for argument " << e.argId() << endl;
     return 1;

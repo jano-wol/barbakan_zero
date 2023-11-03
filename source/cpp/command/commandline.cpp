@@ -309,8 +309,8 @@ void KataGoCommandLine::maybeApplyOverrideConfigArg(ConfigParser& cfg) const {
 }
 
 //cfg must be uninitialized, this will initialize it based on user-provided arguments
-void KataGoCommandLine::getConfig(ConfigParser& cfg) const {
-  string configFile = getConfigFile();
+void KataGoCommandLine::getConfig(ConfigParser& cfg, std::string cfgPath) const {
+  string configFile = cfgPath == "" ? getConfigFile() : cfgPath;
   cfg.initialize(configFile);
   maybeApplyOverrideConfigArg(cfg);
 }

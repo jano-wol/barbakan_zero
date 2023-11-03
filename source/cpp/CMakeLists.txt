@@ -198,6 +198,7 @@ else()
 endif()
 
 #--------------------------- barbakan_zero COMPILING AND LINKING --------------------------------------------------------------
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCORELIBFOLDERPATH=${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_executable(barbakan_zero
   core/global.cpp
@@ -212,6 +213,7 @@ add_executable(barbakan_zero
   core/makedir.cpp
   core/md5.cpp
   core/multithread.cpp
+  core/paths.cpp
   core/rand.cpp
   core/rand_helpers.cpp
   core/sha2.cpp
