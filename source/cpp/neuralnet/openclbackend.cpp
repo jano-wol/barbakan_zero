@@ -36,7 +36,7 @@ using half_t = half_float::half;
 */
 
 //Define this to print out some of the intermediate values of the neural net
-#define DEBUG_INTERMEDIATE_VALUES
+//#define DEBUG_INTERMEDIATE_VALUES
 
 //Define this to try profiling some kernels
 //#define PROFILE_KERNELS
@@ -2837,7 +2837,7 @@ void NeuralNet::getOutput(
     SymmetryHelpers::copyInputsWithSymmetry(rowSpatial, rowSpatialInput, 1, nnYLen, nnXLen, numSpatialFeatures, gpuHandle->inputsUseNHWC, inputBufs[nIdx]->symmetry);
   }
 
-  debugPrintChannels(inputBuffers->userInputBuffer, 22, nnXLen);
+  //debugPrintChannels(inputBuffers->userInputBuffer, 22, nnXLen);
   Buffers* buffers = gpuHandle->buffers.get();
 
   assert(inputBuffers->userInputBufferElts == buffers->inputElts);
