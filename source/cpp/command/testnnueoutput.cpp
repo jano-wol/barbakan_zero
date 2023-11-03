@@ -13,7 +13,7 @@
 
 using namespace std;
 
-namespace testnnueoutput
+namespace nnueoutputtest
 {
 constexpr float evalNormalizer = 128.0f;           // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
 constexpr float moveCandidateNormalizer = 127.0f;  // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
@@ -501,10 +501,10 @@ struct NNUEOutputEngine
     ss.str("");
     ss << "Shuffle ready. rowsDumped=" << trainingRowsDumped + validationRowsDumped
        << " (trainingRowsDumped=" << trainingRowsDumped << " validationRowsDumped=" << validationRowsDumped << ")\n";
-    testnnueoutput::NNUEOutputEngine::logMessage(ss.str());
+    nnueoutputtest::NNUEOutputEngine::logMessage(ss.str());
     ss.str("");
     ss << "Clean tmp files\n";
-    testnnueoutput::NNUEOutputEngine::logMessage(ss.str());
+    nnueoutputtest::NNUEOutputEngine::logMessage(ss.str());
     evalTmp.close();
     moveCandidateTmp.close();
     std::ofstream cleanEvalTmp(evalTmpPath, std::ofstream::out | std::ofstream::trunc);
@@ -513,7 +513,7 @@ struct NNUEOutputEngine
     cleanMoveCandidateTmp.close();
   }
 };
-}  // namespace testnnueoutput
+}  // namespace nnueoutputtest
 
 int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
 {
@@ -641,7 +641,7 @@ int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
                                                                      : true;
 
   Player perspective = Setup::parseReportAnalysisWinrates(cfg, C_EMPTY);
-  testnnueoutput::NNUEOutputEngine* engine = new testnnueoutput::NNUEOutputEngine(
+  nnueoutputtest::NNUEOutputEngine* engine = new nnueoutputtest::NNUEOutputEngine(
       nnModelFile, initialParams, initialRules, assumeMultipleStartingBlackMovesAreHandicap, preventEncore,
       dynamicPlayoutDoublingAdvantageCapPerOppLead, staticPlayoutDoublingAdvantage, staticPDATakesPrecedence,
       avoidMYTDaggerHack, genmoveWideRootNoise, analysisWideRootNoise, genmoveAntiMirror, analysisAntiMirror,
@@ -652,8 +652,8 @@ int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
   ss.str("");
   ss << outputDir << "dump_positions_out";
   string positionsPath = ss.str();
-  string evalTmpPath = testnnueoutput::NNUEOutputEngine::getEvalTmpPath(outputDir);
-  string moveCandidateTmpPath = testnnueoutput::NNUEOutputEngine::getMoveCandidateTmpPath(outputDir);
+  string evalTmpPath = nnueoutputtest::NNUEOutputEngine::getEvalTmpPath(outputDir);
+  string moveCandidateTmpPath = nnueoutputtest::NNUEOutputEngine::getMoveCandidateTmpPath(outputDir);
   std::ifstream positions(positionsPath, std::ios::binary);
   std::ofstream evalTmp(evalTmpPath, std::ios::binary);
   std::ofstream moveCandidateTmp(moveCandidateTmpPath, std::ios::binary);
@@ -666,7 +666,7 @@ int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
     if (currReadRow % 10000 == 0) {
       ss.str("");
       ss << "currReadRow/allReadRows=" << currReadRow << "/" << allReadRows;
-      testnnueoutput::NNUEOutputEngine::logMessage(ss.str());
+      nnueoutputtest::NNUEOutputEngine::logMessage(ss.str());
     }
     ++currReadRow;
     std::vector<int> player;
@@ -687,14 +687,14 @@ int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
     }
     auto targets = engine->getNNUETargets();
     engine->dumpTargets(targets, buf, evalTmp, moveCandidateTmp, posLen);
-    rowsDumped += testnnueoutput::D4Size;
+    rowsDumped += nnueoutputtest::D4Size;
   }
   ss.str("");
   ss << "Ready. rowsDumped=" << rowsDumped << "/n";
-  testnnueoutput::NNUEOutputEngine::logMessage(ss.str());
+  nnueoutputtest::NNUEOutputEngine::logMessage(ss.str());
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();
-  testnnueoutput::NNUEOutputEngine::shuffleData(outputDir);
+  nnueoutputtest::NNUEOutputEngine::shuffleData(outputDir);
   return 0;
 }

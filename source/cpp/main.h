@@ -35,6 +35,7 @@ namespace MainCmds {
   int printclockinfo(int argc, const char* const* argv);
 
   int generatennuedata(int argc, const char* const* argv);
+  int testnnueoutput(int argc, const char* const* argv);
 
   int sandbox();
 }
