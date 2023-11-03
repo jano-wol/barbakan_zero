@@ -65,9 +65,9 @@ struct NNUEOutputEngine
   double genmoveTimeSum;
 
   NNUEOutputEngine(const string& modelFile, SearchParams initialParams, Rules initialRules,
-                      bool assumeMultiBlackHandicap, bool prevtEncore, double dynamicPDACapPerOppLead, double staticPDA,
-                      bool staticPDAPrecedence, bool avoidDagger, double genmoveWRN, double analysisWRN,
-                      bool genmoveAntiMir, bool analysisAntiMir, Player persp, int pvLen)
+                   bool assumeMultiBlackHandicap, bool prevtEncore, double dynamicPDACapPerOppLead, double staticPDA,
+                   bool staticPDAPrecedence, bool avoidDagger, double genmoveWRN, double analysisWRN,
+                   bool genmoveAntiMir, bool analysisAntiMir, Player persp, int pvLen)
       : nnModelFile(modelFile),
         assumeMultipleStartingBlackMovesAreHandicap(assumeMultiBlackHandicap),
         analysisPVLen(pvLen),
@@ -513,9 +513,9 @@ struct NNUEOutputEngine
     cleanMoveCandidateTmp.close();
   }
 };
-}  // namespace datagenerator
+}  // namespace testnnueoutput
 
-int MainCmds::generatennuedata(int /*argc*/, const char* const* argv)
+int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
 {
   Board::initBoardStruct();
   string outputDir(argv[1]);

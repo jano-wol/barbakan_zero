@@ -287,6 +287,7 @@ add_executable(barbakan_zero
   command/runtests.cpp
   command/sandbox.cpp
   command/selfplay.cpp
+  command/testnnueoutput.cpp
   command/tune.cpp
   main.cpp
   )
