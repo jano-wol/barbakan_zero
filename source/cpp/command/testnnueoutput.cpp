@@ -16,11 +16,6 @@ using namespace std;
 
 namespace nnueoutputtest
 {
-constexpr float evalNormalizer = 128.0f;           // DEFINED IN BARBAKAN PROJECT constants.py (nn_scale)
-constexpr float moveCandidateNormalizer = 127.0f;  // DEFINED IN BARBAKAN PROJECT constants.py (ft_scale)
-constexpr size_t trainingRowSize = 512;            // DEFINED in BARBAKAN PROJECT loaders
-constexpr size_t D4Size = 8;
-constexpr float trainRatio = 0.95f;
 
 struct NNUEOutputEngine
 {
