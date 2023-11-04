@@ -225,11 +225,55 @@ struct NNUEOutputEngine
 
   void compareOutput(const NNOutput& nnOutput, int posLen)
   {
-    string outputDir = barbakan_zero::getBuildTestDataFolder();
+    string outputDir = barbakan_zero::getBuildTestDataFolder() + "compare_nnue_output/";
     string pyValuePath = outputDir + "nn_py_value.bin";
     string pyPolicyPath = outputDir + "nn_py_policy.bin";
-    std::ifstream pyValue(pyValuePath, std::ios::binary);
-    std::ifstream pyPolicy(pyPolicyPath, std::ios::binary);
+    std::ifstream pyValueFile(pyValuePath, std::ios::binary);
+    std::ifstream pyPolicyFile(pyPolicyPath, std::ios::binary);
+    std::string pyStr;
+    std::vector<double> pyValues;
+    std::vector<double> pyPolicies;
+    while (getline(pyValueFile, pyStr)) {
+      double v = std::stod(pyStr);
+      pyValues.push_back(v);
+    }
+    while (getline(pyPolicyFile, pyStr)) {
+      double v = std::stod(pyStr);
+      pyPolicies.push_back(v);
+    }
+    if (pyValues.size() != 3) {
+      std::cerr << "pyValues size is not 3. pyValues size=" << pyValues.size() << "\n";
+      exit(1);
+    }
+    if (pyPolicies.size() != posLen * posLen) {
+      std::cerr << "pyPolicies size is not " << posLen * posLen << ". pyPolicies size=" << pyPolicies.size() << "\n";
+      exit(1);
+    }
+
+    std::vector<double> cppValues;
+    cppValues.push_back(nnOutput.rawWinLogit);
+    cppValues.push_back(nnOutput.rawLossLogit);
+    cppValues.push_back(nnOutput.rawNoResultLogit);
+    std::vector<double> cppPolicies;
+    for (size_t idx = 0; idx < posLen * posLen; ++idx) {
+      cppPolicies.push_back(nnOutput.rawPolicyLogits[idx]);
+    }
+
+    double tolerance = 0.0001;
+    for (size_t idx = 0; idx < 3; ++idx) {
+      if (std::abs(cppValues[idx] - pyValues[idx]) > tolerance) {
+        std::cerr << "Value diff is larger than tolerance. cppValue=" << cppValues[idx] << " pyValue=" << pyValues[idx]
+                  << " idx=" << idx << "\n";
+        exit(1);
+      }
+    }
+    for (size_t idx = 0; idx < posLen * posLen; ++idx) {
+      if (std::abs(cppPolicies[idx] - pyPolicies[idx]) > tolerance) {
+        std::cerr << "Policy diff is larger than tolerance. cppPolicy=" << cppPolicies[idx]
+                  << " pyPolicy=" << pyPolicies[idx] << " idx=" << idx << "\n";
+        exit(1);
+      }
+    }
   }
 
   SearchParams getParams() { return params; }
@@ -254,7 +298,7 @@ struct NNUEOutputEngine
 int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
 {
   Board::initBoardStruct();
-  string outputDir = barbakan_zero::getBuildTestDataFolder();
+  string outputDir = barbakan_zero::getBuildTestDataFolder() + "compare_nnue_output/";
   string posLenStr(argv[1]);
   int posLen = stoi(posLenStr);
   Rand seedRand;
