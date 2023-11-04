@@ -16,7 +16,6 @@ using namespace std;
 
 namespace nnueoutputtest
 {
-
 struct NNUEOutputEngine
 {
   NNUEOutputEngine(const NNUEOutputEngine&) = delete;
@@ -275,7 +274,7 @@ int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
                                                false, string(), "VERSION");
     cmd.add(overrideVersionArg);
     // cmd.parse(argc, argv);
-    nnModelFile = barbakan_zero::getBuildDataFolder() + "model/test_nnue_output_model.bin.gz";
+    nnModelFile = barbakan_zero::getBuildTestDataFolder() + "compare_nnue_output/model.bin.gz";
     std::cout << nnModelFile << "\n";
     overrideVersion = overrideVersionArg.getValue();
 
