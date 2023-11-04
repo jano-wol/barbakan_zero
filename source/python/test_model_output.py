@@ -58,6 +58,8 @@ if __name__ == "__main__":
     parser.add_argument('-batch-size', help='Batch size to use for testing', type=int, required=True)
     parser.add_argument('-use-swa', help='Use SWA model', action="store_true", required=False)
     parser.add_argument('-gpu-idx', help='GPU idx', type=int, required=False)
+    parser.add_argument('-out-file-value', help='output', required=True)
+    parser.add_argument('-out-file-policy', help='output', required=True)
 
     args = vars(parser.parse_args())
 
@@ -70,6 +72,12 @@ def main(args):
     batch_size = args["batch_size"]
     use_swa = True
     gpu_idx = args["gpu_idx"]
+    out_file_value_str = args["out_file_value"]
+    out_file_policy_str = args["out_file_policy"]
+    out_file_value_path = os.path.realpath(out_file_value_str)
+    out_file_value = open(out_file_value_path, "w")
+    out_file_policy_path = os.path.realpath(out_file_policy_str)
+    out_file_policy = open(out_file_policy_path, "w")
 
     soft_policy_weight_scale = 1.0
     value_loss_scale = 1.0
@@ -112,7 +120,12 @@ def main(args):
         moves = [210, 191, 231, 189, 252]
         [binary_input_nchw, global_input_nc] = get_input_tensors(moves, pos_len)
         model_outputs = swa_model(binary_input_nchw.cuda(), global_input_nc.cuda())
-        print(model_outputs)
+        value_tensor = model_outputs[0][1][0]
+        policy_tensor = model_outputs[0][0][0][0]
+        for i in range(3):
+            out_file_value.write(str(value_tensor[i].item()) + "\n")
+        for i in range(pos_len * pos_len):
+            out_file_policy.write(str(policy_tensor[i].item()) + "\n")
 
 
 if __name__ == "__main__":
