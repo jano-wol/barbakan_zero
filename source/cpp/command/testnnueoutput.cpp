@@ -209,7 +209,7 @@ struct NNUEOutputEngine
     return isSanePosition;
   }
 
-  pair<float, vector<float>> getNNUETargets()
+  NNOutput getNNOutput()
   {
     Board board = bot->getRootBoard();
     BoardHistory hist = bot->getRootHist();
@@ -225,158 +225,17 @@ struct NNUEOutputEngine
     NNResultBuf buf;
     bool includeOwnerMap = true;
     nnEval->evaluate(board, hist, nextPla, nnInputParams, buf, includeOwnerMap);
-    NNOutput* nnOutput = buf.result.get();
-    if (0.0001 <= nnOutput->whiteNoResultProb) {
-      ASSERT_UNREACHABLE;
-    }
-    float rawPlayerWinProb = (nextPla == P_BLACK) ? nnOutput->whiteLossProb : nnOutput->whiteWinProb;
-    float playerWinProb = min(1.0f, max(rawPlayerWinProb, 0.0f));
-    vector<float> posProbs;
-    for (int y = 0; y < board.y_size; y++) {
-      for (int x = 0; x < board.x_size; x++) {
-        int pos = NNPos::xyToPos(x, y, nnOutput->nnXLen);
-        float prob = nnOutput->policyProbs[pos];
-        prob = min(1.0f, max(prob, 0.0f));
-        posProbs.push_back(prob);
-      }
-    }
-    return {playerWinProb, posProbs};
+    NNOutput nnOutput = *(buf.result);
+    return nnOutput;
   }
 
-  string rawNN()
+  void compareOutput(const NNOutput& nnOutput, int posLen)
   {
-    auto targets = getNNUETargets();
-
-    if (nnEval == NULL)
-      return "";
-    ostringstream out;
-    Board::printBoard(out, bot->getRootBoard(), Loc(-1), NULL);
-    out << "playerWin=" << Global::strprintf("%.6f", targets.first) << endl;
-    out << "policy" << endl;
-
-    auto policyProbs = targets.second;
-    vector<pair<int, float>> posProbs;
-    for (int idx = 0; idx < policyProbs.size(); ++idx) {
-      posProbs.push_back({idx, policyProbs[idx]});
-    }
-    std::sort(posProbs.begin(), posProbs.end(), [](auto& left, auto& right) { return left.second > right.second; });
-    size_t idx = 0;
-    for (const auto& posProb : posProbs) {
-      out << "pos=" << posProb.first << " prob=" << Global::strprintf("%.6f", posProb.second) << endl;
-      ++idx;
-      if (idx == 10) {
-        break;
-      }
-    }
-    return Global::trim(out.str());
-  }
-
-  std::vector<uint8_t> getPackedPos(std::vector<char> pAsVec)
-  {
-    // This logic is only tested for board size 20. For less even board sizes pack cycle might fail, but test should
-    // indicate this possible error.
-    std::vector<uint8_t> ret;
-    int gap = pAsVec.size() % 8;
-    for (int i = 0; i < gap; i++) {
-      pAsVec.push_back(0);
-    }
-    for (size_t i = 0; i < pAsVec.size() / 8; ++i) {
-      uint8_t packData = 0;
-      for (int j = 0; j < 8; ++j) {
-        if (pAsVec[i * 8 + j]) {
-          packData += 1 << j;
-        }
-      }
-      ret.push_back(packData);
-    }
-    return ret;
-  }
-
-  std::vector<uint8_t> getTrainingRow(std::vector<uint8_t> packedPos, std::vector<uint8_t> target)
-  {
-    auto ret = packedPos;
-    ret.insert(ret.end(), target.begin(), target.end());
-    size_t gapSize = trainingRowSize - ret.size();
-    std::vector<uint8_t> gap(gapSize, 0);
-    ret.insert(ret.end(), gap.begin(), gap.end());
-    return ret;
-  }
-
-  pair<pair<float, vector<float>>, std::vector<char>> actF(const pair<float, vector<float>>& targets,
-                                                           const vector<char>& buf, int posLen)
-  {
-    vector<float> targetsRet(targets.second.size());
-    vector<char> bufRet(buf.size());
-
-    for (int i = 0; i < posLen * posLen; ++i) {
-      int x = i / posLen;
-      int y = i % posLen;
-      int xNew = y;
-      int yNew = posLen - 1 - x;
-      int iNew = xNew * posLen + yNew;
-      targetsRet[iNew] = targets.second[i];
-      bufRet[iNew] = buf[i];
-      bufRet[iNew + posLen * posLen] = buf[i + posLen * posLen];
-    }
-    return {{targets.first, targetsRet}, bufRet};
-  }
-
-  pair<pair<float, vector<float>>, std::vector<char>> actT(const pair<float, vector<float>>& targets,
-                                                           const vector<char>& buf, int posLen)
-  {
-    vector<float> targetsRet(targets.second.size());
-    vector<char> bufRet(buf.size());
-
-    for (int i = 0; i < posLen * posLen; ++i) {
-      int x = i / posLen;
-      int y = i % posLen;
-      int xNew = x;
-      int yNew = posLen - 1 - y;
-      int iNew = xNew * posLen + yNew;
-      targetsRet[iNew] = targets.second[i];
-      bufRet[iNew] = buf[i];
-      bufRet[iNew + posLen * posLen] = buf[i + posLen * posLen];
-    }
-    return {{targets.first, targetsRet}, bufRet};
-  }
-
-  pair<pair<float, vector<float>>, vector<char>> actD4(const pair<float, vector<float>>& targets,
-                                                       const vector<char>& buf, size_t symm, int posLen)
-  {
-    auto t = symm / 4;
-    auto f = symm % 4;
-    pair<float, vector<float>> currTargets = targets;
-    std::vector<char> currBuf = buf;
-    for (int i = 0; i < f; ++i) {
-      auto curr = actF(currTargets, currBuf, posLen);
-      currTargets = curr.first;
-      currBuf = curr.second;
-    }
-    for (int i = 0; i < t; ++i) {
-      auto curr = actT(currTargets, currBuf, posLen);
-      currTargets = curr.first;
-      currBuf = curr.second;
-    }
-    return {currTargets, currBuf};
-  }
-
-  void dumpTargets(const pair<float, vector<float>>& targets, const std::vector<char>& buf, std::ofstream& evalTmp,
-                   std::ofstream& moveCandidateTmp, int posLen)
-  {
-    for (int symm = 0; symm < D4Size; ++symm) {
-      auto symmetrizedTarBuf = actD4(targets, buf, symm, posLen);
-      auto packedPos = getPackedPos(symmetrizedTarBuf.second);
-      std::vector<uint8_t> dumpEval;
-      dumpEval.push_back(static_cast<uint8_t>(symmetrizedTarBuf.first.first * evalNormalizer + 0.5f));
-      std::vector<uint8_t> dumpMoveDist;
-      for (auto f : symmetrizedTarBuf.first.second) {
-        dumpMoveDist.push_back(static_cast<uint8_t>(f * moveCandidateNormalizer + 0.5f));
-      }
-      auto evalTrainingRow = getTrainingRow(packedPos, dumpEval);
-      auto moveCandidateTrainingRow = getTrainingRow(packedPos, dumpMoveDist);
-      evalTmp.write(reinterpret_cast<const char*>(evalTrainingRow.data()), trainingRowSize);
-      moveCandidateTmp.write(reinterpret_cast<const char*>(moveCandidateTrainingRow.data()), trainingRowSize);
-    }
+    string outputDir = barbakan_zero::getBuildTestDataFolder();
+    string pyValuePath = outputDir + "nn_py_value.bin";
+    string pyPolicyPath = outputDir + "nn_py_policy.bin";
+    std::ifstream pyValue(pyValuePath, std::ios::binary);
+    std::ifstream pyPolicy(pyPolicyPath, std::ios::binary);
   }
 
   SearchParams getParams() { return params; }
@@ -394,124 +253,6 @@ struct NNUEOutputEngine
     std::string timeStr(std::ctime(&t_t));
     timeStr = timeStr.substr(0, timeStr.length() - 1);
     std::cout << "[" << timeStr << "] " << message << std::endl;
-  }
-
-  static std::string getEvalTmpPath(const string& outputDir)
-  {
-    stringstream ss;
-    ss.str("");
-    ss << outputDir << "eval_tmp.bin";
-    return ss.str();
-  }
-
-  static std::string getMoveCandidateTmpPath(const string& outputDir)
-  {
-    stringstream ss;
-    ss.str("");
-    ss << outputDir << "move_candidate_tmp.bin";
-    return ss.str();
-  }
-
-  static void shuffleData(const string& outputDir)
-  {
-    stringstream ss;
-    ss.str("");
-    ss << "Shuffle data\n";
-    NNUEOutputEngine::logMessage(ss.str());
-    string evalTmpPath = getEvalTmpPath(outputDir);
-    string moveCandidateTmpPath = getMoveCandidateTmpPath(outputDir);
-    ss.str("");
-    ss << outputDir << "eval.bin";
-    string evalPath = ss.str();
-    ss.str("");
-    ss << outputDir << "eval_val.bin";
-    string evalValPath = ss.str();
-    ss.str("");
-    ss << outputDir << "move_candidate.bin";
-    string moveCandidatePath = ss.str();
-    ss.str("");
-    ss << outputDir << "move_candidate_val.bin";
-    string moveCandidateValPath = ss.str();
-    std::ifstream evalTmp(evalTmpPath, std::ios::binary);
-    std::ifstream moveCandidateTmp(moveCandidateTmpPath, std::ios::binary);
-    std::ofstream eval(evalPath, std::ios::binary);
-    std::ofstream evalVal(evalValPath, std::ios::binary);
-    std::ofstream moveCandidate(moveCandidatePath, std::ios::binary);
-    std::ofstream moveCandidateVal(moveCandidateValPath, std::ios::binary);
-
-    size_t allReadRows1 = 0;
-    {
-      ifstream in(evalTmpPath, ifstream::ate | ifstream::binary);
-      size_t fileSize = in.tellg();
-      if (fileSize % trainingRowSize != 0) {
-        ASSERT_UNREACHABLE;
-      }
-      allReadRows1 = fileSize / trainingRowSize;
-    }
-    size_t allReadRows2 = 0;
-    {
-      ifstream in(moveCandidateTmpPath, ifstream::ate | ifstream::binary);
-      size_t fileSize = in.tellg();
-      if (fileSize % trainingRowSize != 0) {
-        ASSERT_UNREACHABLE;
-      }
-      allReadRows2 = fileSize / trainingRowSize;
-    }
-    if (allReadRows1 != allReadRows2) {
-      ASSERT_UNREACHABLE;
-    }
-    size_t allReadRows = allReadRows1;
-    vector<size_t> perm;
-    perm.reserve(allReadRows);
-    std::srand(unsigned(std::time(0)));
-    for (size_t i = 0; i < allReadRows; ++i) {
-      perm.push_back(i);
-    }
-    ss.str("");
-    ss << "shuffle choose start\n";
-    NNUEOutputEngine::logMessage(ss.str());
-    std::random_shuffle(perm.begin(), perm.end());
-    ss.str("");
-    ss << "shuffle is choosen\n";
-    NNUEOutputEngine::logMessage(ss.str());
-    std::vector<char> bufEval(trainingRowSize);
-    std::vector<char> bufMoveCandidate(trainingRowSize);
-    size_t trainingRowsDumped = 0;
-    size_t validationRowsDumped = 0;
-    for (size_t idx = 0; idx < perm.size(); ++idx) {
-      if (idx % 10000 == 0) {
-        ss.str("");
-        ss << "currShuffe/allShuffle=" << idx << "/" << perm.size();
-        NNUEOutputEngine::logMessage(ss.str());
-      }
-      size_t p = perm[idx];
-      evalTmp.seekg(p * trainingRowSize, ios::beg);
-      moveCandidateTmp.seekg(p * trainingRowSize, ios::beg);
-      evalTmp.read(&bufEval[0], trainingRowSize);
-      moveCandidateTmp.read(&bufMoveCandidate[0], trainingRowSize);
-      if (idx < perm.size() * trainRatio) {
-        eval.write(reinterpret_cast<const char*>(bufEval.data()), trainingRowSize);
-        moveCandidate.write(reinterpret_cast<const char*>(bufMoveCandidate.data()), trainingRowSize);
-        ++trainingRowsDumped;
-      } else {
-        evalVal.write(reinterpret_cast<const char*>(bufEval.data()), trainingRowSize);
-        moveCandidateVal.write(reinterpret_cast<const char*>(bufMoveCandidate.data()), trainingRowSize);
-        ++validationRowsDumped;
-      }
-    }
-    ss.str("");
-    ss << "Shuffle ready. rowsDumped=" << trainingRowsDumped + validationRowsDumped
-       << " (trainingRowsDumped=" << trainingRowsDumped << " validationRowsDumped=" << validationRowsDumped << ")\n";
-    nnueoutputtest::NNUEOutputEngine::logMessage(ss.str());
-    ss.str("");
-    ss << "Clean tmp files\n";
-    nnueoutputtest::NNUEOutputEngine::logMessage(ss.str());
-    evalTmp.close();
-    moveCandidateTmp.close();
-    std::ofstream cleanEvalTmp(evalTmpPath, std::ofstream::out | std::ofstream::trunc);
-    std::ofstream cleanMoveCandidateTmp(moveCandidateTmpPath, std::ofstream::out | std::ofstream::trunc);
-    cleanEvalTmp.close();
-    cleanMoveCandidateTmp.close();
   }
 };
 }  // namespace nnueoutputtest
@@ -651,53 +392,22 @@ int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
       perspective, analysisPVLen);
   engine->setOrResetBoardSize(cfg, logger, seedRand, defaultBoardXSize, defaultBoardYSize);
 
-  stringstream ss;
-  ss.str("");
-  ss << outputDir << "dump_positions_out";
-  string positionsPath = ss.str();
-  string evalTmpPath = nnueoutputtest::NNUEOutputEngine::getEvalTmpPath(outputDir);
-  string moveCandidateTmpPath = nnueoutputtest::NNUEOutputEngine::getMoveCandidateTmpPath(outputDir);
-  std::ifstream positions(positionsPath, std::ios::binary);
-  std::ofstream evalTmp(evalTmpPath, std::ios::binary);
-  std::ofstream moveCandidateTmp(moveCandidateTmpPath, std::ios::binary);
-  size_t bufSize = 2 * posLen * posLen;
-  std::vector<char> buf(bufSize);
-  size_t allReadRows = 0;
-  size_t currReadRow = 0;  // for validation set creation
-  size_t rowsDumped = 0;
-  while (true) {
-    if (currReadRow % 10000 == 0) {
-      ss.str("");
-      ss << "currReadRow/allReadRows=" << currReadRow << "/" << allReadRows;
-      nnueoutputtest::NNUEOutputEngine::logMessage(ss.str());
-    }
-    ++currReadRow;
-    std::vector<int> player;
-    std::vector<int> waiter;
-    player.push_back(191);
-    player.push_back(189);
-    waiter.push_back(210);
-    waiter.push_back(231);
-    waiter.push_back(252);
-    bool isSanePosition = true;
-    if (((player.size() + waiter.size()) % 2) == 0) {
-      isSanePosition = engine->setPosition(player, waiter, posLen);
-    } else {
-      isSanePosition = engine->setPosition(waiter, player, posLen);
-    }
-    if (isSanePosition == false) {
-      continue;
-    }
-    auto targets = engine->getNNUETargets();
-    engine->dumpTargets(targets, buf, evalTmp, moveCandidateTmp, posLen);
-    rowsDumped += nnueoutputtest::D4Size;
+  std::vector<int> player;
+  std::vector<int> waiter;
+  player.push_back(191);
+  player.push_back(189);
+  waiter.push_back(210);
+  waiter.push_back(231);
+  waiter.push_back(252);
+  if (((player.size() + waiter.size()) % 2) == 0) {
+    engine->setPosition(player, waiter, posLen);
+  } else {
+    engine->setPosition(waiter, player, posLen);
   }
-  ss.str("");
-  ss << "Ready. rowsDumped=" << rowsDumped << "/n";
-  nnueoutputtest::NNUEOutputEngine::logMessage(ss.str());
+  auto nnOutput = engine->getNNOutput();
+  engine->compareOutput(nnOutput, posLen);
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();
-  nnueoutputtest::NNUEOutputEngine::shuffleData(outputDir);
   return 0;
 }

@@ -701,11 +701,8 @@ void NNEvaluator::evaluate(
       double scoreValue = atan(buf.result->whiteScoreMean) * twoOverPi;
       {
         double winLogits = buf.result->whiteWinProb;
-        buf.result->rawWinLogit = buf.result->whiteWinProb;
         double lossLogits = buf.result->whiteLossProb;
-        buf.result->rawLossLogit = buf.result->whiteLossProb;
         double noResultLogits = buf.result->whiteNoResultProb;
-        buf.result->rawNoResultLogit = buf.result->whiteNoResultProb;
 
         //Softmax
         double maxLogits = std::max(std::max(winLogits,lossLogits),noResultLogits);
@@ -761,8 +758,11 @@ void NNEvaluator::evaluate(
       double shorttermScoreError;
       {
         double winLogits = buf.result->whiteWinProb;
+        buf.result->rawWinLogit = buf.result->whiteWinProb;
         double lossLogits = buf.result->whiteLossProb;
+        buf.result->rawLossLogit = buf.result->whiteLossProb;
         double noResultLogits = buf.result->whiteNoResultProb;
+        buf.result->rawNoResultLogit = buf.result->whiteNoResultProb;
         double varTimeLeftPreSoftplus = buf.result->varTimeLeft;
         double shorttermWinlossErrorPreSoftplus = buf.result->shorttermWinlossError;
         double shorttermScoreErrorPreSoftplus = buf.result->shorttermScoreError;

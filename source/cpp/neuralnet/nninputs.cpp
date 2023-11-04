@@ -46,6 +46,9 @@ NNOutput::NNOutput(const NNOutput& other) {
   whiteWinProb = other.whiteWinProb;
   whiteLossProb = other.whiteLossProb;
   whiteNoResultProb = other.whiteNoResultProb;
+  rawWinLogit = other.rawWinLogit;
+  rawLossLogit = other.rawLossLogit;
+  rawNoResultLogit = other.rawNoResultLogit;
   whiteScoreMean = other.whiteScoreMean;
   whiteScoreMeanSq = other.whiteScoreMeanSq;
   whiteLead = other.whiteLead;
@@ -63,7 +66,8 @@ NNOutput::NNOutput(const NNOutput& other) {
   else
     noisedPolicyProbs = NULL;
 
-  std::copy(other.policyProbs, other.policyProbs+NNPos::MAX_NN_POLICY_SIZE, policyProbs);
+  std::copy(other.policyProbs, other.policyProbs + NNPos::MAX_NN_POLICY_SIZE, policyProbs);
+  std::copy(other.rawPolicyLogits, other.rawPolicyLogits + NNPos::MAX_NN_POLICY_SIZE, rawPolicyLogits);
 }
 
 NNOutput::NNOutput(const vector<shared_ptr<NNOutput>>& others) {
@@ -90,6 +94,9 @@ NNOutput::NNOutput(const vector<shared_ptr<NNOutput>>& others) {
     whiteWinProb += other.whiteWinProb;
     whiteLossProb += other.whiteLossProb;
     whiteNoResultProb += other.whiteNoResultProb;
+    rawWinLogit += other.rawWinLogit;
+    rawLossLogit += other.rawLossLogit;
+    rawNoResultLogit += other.rawNoResultLogit;
     whiteScoreMean += other.whiteScoreMean;
     whiteScoreMeanSq += other.whiteScoreMeanSq;
     whiteLead += other.whiteLead;
@@ -100,6 +107,9 @@ NNOutput::NNOutput(const vector<shared_ptr<NNOutput>>& others) {
   whiteWinProb /= floatLen;
   whiteLossProb /= floatLen;
   whiteNoResultProb /= floatLen;
+  rawWinLogit /= floatLen;
+  rawLossLogit /= floatLen;
+  rawNoResultLogit /= floatLen;
   whiteScoreMean /= floatLen;
   whiteScoreMeanSq /= floatLen;
   whiteLead /= floatLen;
@@ -117,12 +127,14 @@ NNOutput::NNOutput(const vector<shared_ptr<NNOutput>>& others) {
   {
     bool mismatch = false;
     std::fill(policyProbs, policyProbs + NNPos::MAX_NN_POLICY_SIZE, 0.0f);
-    for(int i = 0; i<len; i++) {
+    std::fill(rawPolicyLogits, rawPolicyLogits + NNPos::MAX_NN_POLICY_SIZE, 0.0f);
+    for (int i = 0; i < len; i++) {
       const NNOutput& other = *(others[i]);
       for(int pos = 0; pos<NNPos::MAX_NN_POLICY_SIZE; pos++) {
         if(i > 0 && (policyProbs[pos] < 0) != (other.policyProbs[pos] < 0))
           mismatch = true;
         policyProbs[pos] += other.policyProbs[pos];
+        rawPolicyLogits[pos] += other.rawPolicyLogits[pos];
       }
     }
     //In case of mismatch, just take the first one
@@ -130,22 +142,27 @@ NNOutput::NNOutput(const vector<shared_ptr<NNOutput>>& others) {
     if(mismatch) {
       const NNOutput& other = *(others[0]);
       std::copy(other.policyProbs, other.policyProbs + NNPos::MAX_NN_POLICY_SIZE, policyProbs);
-    }
-    else {
-      for(int pos = 0; pos<NNPos::MAX_NN_POLICY_SIZE; pos++)
+      std::copy(other.rawPolicyLogits, other.rawPolicyLogits + NNPos::MAX_NN_POLICY_SIZE, rawPolicyLogits);
+    } else {
+      for (int pos = 0; pos < NNPos::MAX_NN_POLICY_SIZE; pos++) {
         policyProbs[pos] /= floatLen;
+        rawPolicyLogits[pos] /= floatLen;
+      }
     }
   }
-
 }
 
-NNOutput& NNOutput::operator=(const NNOutput& other) {
-  if(&other == this)
+NNOutput& NNOutput::operator=(const NNOutput& other)
+{
+  if (&other == this)
     return *this;
   nnHash = other.nnHash;
   whiteWinProb = other.whiteWinProb;
   whiteLossProb = other.whiteLossProb;
   whiteNoResultProb = other.whiteNoResultProb;
+  rawWinLogit = other.rawWinLogit;
+  rawLossLogit = other.rawLossLogit;
+  rawNoResultLogit = other.rawNoResultLogit;
   whiteScoreMean = other.whiteScoreMean;
   whiteScoreMeanSq = other.whiteScoreMeanSq;
   whiteLead = other.whiteLead;
@@ -165,7 +182,8 @@ NNOutput& NNOutput::operator=(const NNOutput& other) {
   else
     noisedPolicyProbs = NULL;
 
-  std::copy(other.policyProbs, other.policyProbs+NNPos::MAX_NN_POLICY_SIZE, policyProbs);
+  std::copy(other.policyProbs, other.policyProbs + NNPos::MAX_NN_POLICY_SIZE, policyProbs);
+  std::copy(other.rawPolicyLogits, other.rawPolicyLogits + NNPos::MAX_NN_POLICY_SIZE, rawPolicyLogits);
 
   return *this;
 }
