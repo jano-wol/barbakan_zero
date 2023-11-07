@@ -1767,3 +1767,7 @@ class Model(torch.nn.Module):
             pred_shortterm_score_error, # N
             scorebelief_logits, # N, 2 * (self.pos_len*self.pos_len + EXTRA_SCORE_DISTR_RADIUS)
         )
+
+    @staticmethod
+    def dump_weights(swa_model, out_file_nnue_weights_path):
+        out_file_nnue_weights = open(out_file_nnue_weights_path, "w")

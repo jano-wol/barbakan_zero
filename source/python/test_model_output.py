@@ -60,6 +60,7 @@ if __name__ == "__main__":
     parser.add_argument('-gpu-idx', help='GPU idx', type=int, required=False)
     parser.add_argument('-out-file-value', help='output', required=True)
     parser.add_argument('-out-file-policy', help='output', required=True)
+    parser.add_argument('-out-file-nnue-weights', help='output', required=True)
 
     args = vars(parser.parse_args())
 
@@ -78,13 +79,8 @@ def main(args):
     out_file_value = open(out_file_value_path, "w")
     out_file_policy_path = os.path.realpath(out_file_policy_str)
     out_file_policy = open(out_file_policy_path, "w")
-
-    soft_policy_weight_scale = 1.0
-    value_loss_scale = 1.0
-    td_value_loss_scales = [0.4, 0.4, 0.4]
-
-    world_size = 1
-    rank = 0
+    out_file_nnue_weights_str = args["out_file_nnue_weights"]
+    out_file_nnue_weights_path = os.path.realpath(out_file_nnue_weights_str)
 
     # SET UP LOGGING -------------------------------------------------------------
 
@@ -115,6 +111,7 @@ def main(args):
     # LOAD MODEL ---------------------------------------------------------------------
 
     model, swa_model, _ = load_model(checkpoint_file, use_swa, device=device, pos_len=pos_len, verbose=True)
+    Model.dump_weights(swa_model, out_file_nnue_weights_path)
     logging.info("Beginning test!")
     with torch.no_grad():
         moves = [210, 191, 231, 189, 252]
