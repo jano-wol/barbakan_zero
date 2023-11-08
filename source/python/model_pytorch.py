@@ -1801,12 +1801,12 @@ class Model(torch.nn.Module):
         for s in shape:
             file.write(str(s))
             if idx < len(shape) - 1:
-                file.write(", ")
+                file.write(" ")
             idx += 1
         file.write("] ")
         for x in np.ndindex(shape):
             v = weights[x].item()
-            file.write(str(v) + ", ")
+            file.write(str(v) + " ")
         file.write("\n")
 
     @staticmethod
