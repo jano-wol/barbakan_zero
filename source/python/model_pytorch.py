@@ -12,6 +12,7 @@ import modelconfigs
 
 EXTRA_SCORE_DISTR_RADIUS = 60
 
+
 def act(activation, inplace=False):
     if activation == "relu":
         return torch.nn.ReLU(inplace=inplace)
@@ -30,6 +31,7 @@ def act(activation, inplace=False):
         return torch.nn.Identity()
     assert False, f"Unknown activation name: {activation}"
 
+
 def compute_gain(activation):
     if activation == "relu" or activation == "hardswish":
         gain = math.sqrt(2.0)
@@ -45,6 +47,7 @@ def compute_gain(activation):
         assert False, f"Unknown activation name: {activation}"
     return gain
 
+
 def init_weights(tensor, activation, scale, fan_tensor=None):
     gain = compute_gain(activation)
 
@@ -59,7 +62,8 @@ def init_weights(tensor, activation, scale, fan_tensor=None):
     if std < 1e-10:
         tensor.fill_(0.0)
     else:
-        torch.nn.init.trunc_normal_(tensor, mean=0.0, std=std, a=-2.0*std, b=2.0*std)
+        torch.nn.init.trunc_normal_(tensor, mean=0.0, std=std, a=-2.0 * std, b=2.0 * std)
+
 
 class SoftPlusWithGradientFloorFunction(torch.autograd.Function):
     """
@@ -67,10 +71,11 @@ class SoftPlusWithGradientFloorFunction(torch.autograd.Function):
     Equivalent to having a dynamic learning rate depending on stop_grad(x) where x is the input.
     If square, then also squares the result while halving the input, and still also keeping the same gradient.
     """
+
     @staticmethod
     def forward(ctx, x: torch.Tensor, grad_floor: float, square: bool):
         ctx.save_for_backward(x)
-        ctx.grad_floor = grad_floor # grad_floor is not a tensor
+        ctx.grad_floor = grad_floor  # grad_floor is not a tensor
         if square:
             return torch.square(torch.nn.functional.softplus(0.5 * x))
         else:
@@ -87,12 +92,13 @@ class SoftPlusWithGradientFloorFunction(torch.autograd.Function):
             grad_x = grad_output * (grad_floor + (1.0 - grad_floor) / (1.0 + torch.exp(-x)))
         return grad_x, grad_grad_floor, grad_square
 
+
 class BiasMask(torch.nn.Module):
     def __init__(
-        self,
-        c_in,
-        config: modelconfigs.ModelConfig,
-        is_after_batchnorm: bool = False,
+            self,
+            c_in,
+            config: modelconfigs.ModelConfig,
+            is_after_batchnorm: bool = False,
     ):
         super(BiasMask, self).__init__()
         self.c_in = c_in
@@ -103,7 +109,7 @@ class BiasMask(torch.nn.Module):
     def set_scale(self, scale: Optional[float]):
         self.scale = scale
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         if self.is_after_batchnorm:
             reg_dict["output_noreg"].append(self.beta)
         else:
@@ -132,12 +138,12 @@ class BiasMask(torch.nn.Module):
 
 class NormMask(torch.nn.Module):
     def __init__(
-        self,
-        c_in,
-        config: modelconfigs.ModelConfig,
-        fixup_use_gamma: bool,
-        force_use_gamma: bool = False,
-        is_last_batchnorm: bool = False,
+            self,
+            c_in,
+            config: modelconfigs.ModelConfig,
+            fixup_use_gamma: bool,
+            force_use_gamma: bool = False,
+            is_last_batchnorm: bool = False,
     ):
         """Various kinds of normalization.
 
@@ -158,9 +164,10 @@ class NormMask(torch.nn.Module):
         self.fixup_use_gamma = fixup_use_gamma
         self.is_last_batchnorm = is_last_batchnorm
         self.use_gamma = (
-            ("bnorm_use_gamma" in config and config["bnorm_use_gamma"]) or
-            ((self.norm_kind == "fixup" or self.norm_kind == "fixscale" or self.norm_kind == "fixscaleonenorm") and fixup_use_gamma) or
-            force_use_gamma
+                ("bnorm_use_gamma" in config and config["bnorm_use_gamma"]) or
+                ((
+                             self.norm_kind == "fixup" or self.norm_kind == "fixscale" or self.norm_kind == "fixscaleonenorm") and fixup_use_gamma) or
+                force_use_gamma
         )
         self.c_in = c_in
 
@@ -204,7 +211,8 @@ class NormMask(torch.nn.Module):
                 "renorm_dclippage", torch.zeros((), dtype=torch.float)
             )
 
-        elif self.norm_kind == "fixup" or self.norm_kind == "fixscale" or (self.norm_kind == "fixscaleonenorm" and not self.is_last_batchnorm):
+        elif self.norm_kind == "fixup" or self.norm_kind == "fixscale" or (
+                self.norm_kind == "fixscaleonenorm" and not self.is_last_batchnorm):
             self.is_using_batchnorm = False
             self.beta = torch.nn.Parameter(torch.zeros(1, c_in, 1, 1))
             if self.use_gamma:
@@ -215,7 +223,7 @@ class NormMask(torch.nn.Module):
     def set_scale(self, scale: Optional[float]):
         self.scale = scale
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         if self.is_last_batchnorm:
             if self.gamma is not None:
                 reg_dict["output"].append(self.gamma)
@@ -238,10 +246,10 @@ class NormMask(torch.nn.Module):
     def _compute_bnorm_values(self, x, mask, mask_sum: float):
         # This is the mean, computed only over exactly the areas of the mask, weighting each spot equally,
         # even across different elements in the batch that might have different board sizes.
-        mean = torch.sum(x * mask, dim=(0,2,3),keepdim=True) / mask_sum
+        mean = torch.sum(x * mask, dim=(0, 2, 3), keepdim=True) / mask_sum
         zeromean_x = x - mean
         # Similarly, the variance computed exactly only over those spots
-        var = torch.sum(torch.square(zeromean_x * mask),dim=(0,2,3),keepdim=True) / mask_sum
+        var = torch.sum(torch.square(zeromean_x * mask), dim=(0, 2, 3), keepdim=True) / mask_sum
         std = torch.sqrt(var + self.epsilon)
         return zeromean_x, mean, std
 
@@ -256,7 +264,6 @@ class NormMask(torch.nn.Module):
                 return (x * self.gamma + self.beta) * mask
             else:
                 return (x + self.beta) * mask
-
 
     def forward(self, x, mask, mask_sum: float):
         """
@@ -281,7 +288,8 @@ class NormMask(torch.nn.Module):
 
                 return self.apply_gamma_beta_scale_mask(zeromean_x / std, mask)
             else:
-                return self.apply_gamma_beta_scale_mask((x - self.running_mean.view(1,self.c_in,1,1)) / self.running_std.view(1,self.c_in,1,1), mask)
+                return self.apply_gamma_beta_scale_mask(
+                    (x - self.running_mean.view(1, self.c_in, 1, 1)) / self.running_std.view(1, self.c_in, 1, 1), mask)
 
         elif self.norm_kind == "brenorm" or self.norm_kind == "fixbrenorm":
             assert x.shape[1] == self.c_in
@@ -309,14 +317,18 @@ class NormMask(torch.nn.Module):
                     self.renorm_dclippage += 0.01 * (dclippage - self.renorm_dclippage)
 
                 if self.rmax > 1.00000001 or self.dmax > 0.00000001:
-                    return self.apply_gamma_beta_scale_mask(zeromean_x / std * r.detach().view(1,self.c_in,1,1) + d.detach().view(1,self.c_in,1,1), mask)
+                    return self.apply_gamma_beta_scale_mask(
+                        zeromean_x / std * r.detach().view(1, self.c_in, 1, 1) + d.detach().view(1, self.c_in, 1, 1),
+                        mask)
                 else:
                     return self.apply_gamma_beta_scale_mask(zeromean_x / std, mask)
 
             else:
-                return self.apply_gamma_beta_scale_mask((x - self.running_mean.view(1,self.c_in,1,1)) / self.running_std.view(1,self.c_in,1,1), mask)
+                return self.apply_gamma_beta_scale_mask(
+                    (x - self.running_mean.view(1, self.c_in, 1, 1)) / self.running_std.view(1, self.c_in, 1, 1), mask)
 
-        elif self.norm_kind == "fixup" or self.norm_kind == "fixscale" or (self.norm_kind == "fixscaleonenorm" and not self.is_last_batchnorm):
+        elif self.norm_kind == "fixup" or self.norm_kind == "fixscale" or (
+                self.norm_kind == "fixscaleonenorm" and not self.is_last_batchnorm):
             return self.apply_gamma_beta_scale_mask(x, mask)
 
         else:
@@ -341,8 +353,8 @@ class KataGPool(torch.nn.Module):
         layer_mean = torch.sum(x, dim=(2, 3), keepdim=True, dtype=torch.float32) / mask_sum_hw
         # All activation functions we use right now are always greater than -1.0, and map 0 -> 0.
         # So off-board areas will equal 0, and then this max is mask-safe if we assign -1.0 to off-board areas.
-        (layer_max,_argmax) = torch.max((x+(mask-1.0)).view(x.shape[0],x.shape[1],-1).to(torch.float32), dim=2)
-        layer_max = layer_max.view(x.shape[0],x.shape[1],1,1)
+        (layer_max, _argmax) = torch.max((x + (mask - 1.0)).view(x.shape[0], x.shape[1], -1).to(torch.float32), dim=2)
+        layer_max = layer_max.view(x.shape[0], x.shape[1], 1, 1)
 
         out_pool1 = layer_mean
         out_pool2 = layer_mean * (mask_sum_hw_sqrt_offset / 10.0)
@@ -376,6 +388,7 @@ class KataValueHeadGPool(torch.nn.Module):
         out = torch.cat((out_pool1, out_pool2, out_pool3), dim=1)
         return out
 
+
 class KataConvAndGPool(torch.nn.Module):
     def __init__(self, c_in, c_out, c_gpool, config, activation):
         super(KataConvAndGPool, self).__init__()
@@ -401,11 +414,11 @@ class KataConvAndGPool(torch.nn.Module):
             init_weights(self.conv1g.weight, self.activation, scale=math.sqrt(scale) * math.sqrt(g_scale))
             init_weights(self.linear_g.weight, self.activation, scale=math.sqrt(scale) * math.sqrt(g_scale))
         else:
-            init_weights(self.conv1r.weight, self.activation, scale=scale*r_scale)
+            init_weights(self.conv1r.weight, self.activation, scale=scale * r_scale)
             init_weights(self.conv1g.weight, self.activation, scale=math.sqrt(scale) * 1.0)
             init_weights(self.linear_g.weight, self.activation, scale=math.sqrt(scale) * g_scale)
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         reg_dict["normal"].append(self.conv1r.weight)
         reg_dict["normal"].append(self.conv1g.weight)
         self.normg.add_reg_dict(reg_dict)
@@ -417,8 +430,7 @@ class KataConvAndGPool(torch.nn.Module):
     def add_brenorm_clippage(self, upper_rclippage, lower_rclippage, dclippage):
         self.normg.add_brenorm_clippage(upper_rclippage, lower_rclippage, dclippage)
 
-
-    def forward(self, x, mask, mask_sum_hw, mask_sum:float):
+    def forward(self, x, mask, mask_sum_hw, mask_sum: float):
         """
         Parameters:
         x: NCHW
@@ -461,7 +473,7 @@ class KataConvAndAttentionPool(torch.nn.Module):
             fixup_use_gamma=False,
         )
         self.actg = act(activation, inplace=True)
-        self.conv_mix = torch.nn.Conv2d(c_gpool*2, c_out, kernel_size=1, padding="same", bias=False)
+        self.conv_mix = torch.nn.Conv2d(c_gpool * 2, c_out, kernel_size=1, padding="same", bias=False)
 
     def initialize(self, scale):
         # Scaling so that variance on the r and g branches adds up to 1.0
@@ -474,13 +486,13 @@ class KataConvAndAttentionPool(torch.nn.Module):
             init_weights(self.conv1q.weight, "identity", scale=math.sqrt(2.0))
             init_weights(self.conv_mix.weight, self.activation, scale=math.sqrt(scale) * math.sqrt(g_scale))
         else:
-            init_weights(self.conv1r.weight, self.activation, scale=scale*r_scale)
+            init_weights(self.conv1r.weight, self.activation, scale=scale * r_scale)
             init_weights(self.conv1g.weight, self.activation, scale=math.sqrt(scale) * 1.0)
             init_weights(self.conv1k.weight, "identity", scale=math.sqrt(2.0))
             init_weights(self.conv1q.weight, "identity", scale=math.sqrt(2.0))
             init_weights(self.conv_mix.weight, self.activation, scale=math.sqrt(scale) * g_scale)
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         reg_dict["normal"].append(self.conv1r.weight)
         reg_dict["normal"].append(self.conv1g.weight)
         reg_dict["output"].append(self.conv1k.weight)
@@ -494,7 +506,7 @@ class KataConvAndAttentionPool(torch.nn.Module):
     def add_brenorm_clippage(self, upper_rclippage, lower_rclippage, dclippage):
         self.normg.add_brenorm_clippage(upper_rclippage, lower_rclippage, dclippage)
 
-    def forward(self, x, mask, mask_sum_hw, mask_sum:float):
+    def forward(self, x, mask, mask_sum_hw, mask_sum: float):
         """
         Parameters:
         x: NCHW
@@ -511,22 +523,22 @@ class KataConvAndAttentionPool(torch.nn.Module):
         out = x
         outr = self.conv1r(out)
         outg = self.conv1g(out)
-        outk = self.conv1k(out).view(n*self.c_apheads, self.c_gpool//self.c_apheads, h*w)
-        outq = self.conv1q(out).view(n*self.c_apheads, self.c_gpool//self.c_apheads, h*w)
-        attention_logits = torch.bmm(torch.transpose(outk,1,2), outq) # n*heads, src h*w, dst h*w
-        attention_logits = attention_logits.view(n, self.c_apheads, h*w, h*w)
-        attention_logits = attention_logits - (1.0 - mask.view(n,1,h*w,1)) * 6000.0
-        attention_logits = attention_logits.view(n * self.c_apheads, h*w, h*w)
+        outk = self.conv1k(out).view(n * self.c_apheads, self.c_gpool // self.c_apheads, h * w)
+        outq = self.conv1q(out).view(n * self.c_apheads, self.c_gpool // self.c_apheads, h * w)
+        attention_logits = torch.bmm(torch.transpose(outk, 1, 2), outq)  # n*heads, src h*w, dst h*w
+        attention_logits = attention_logits.view(n, self.c_apheads, h * w, h * w)
+        attention_logits = attention_logits - (1.0 - mask.view(n, 1, h * w, 1)) * 6000.0
+        attention_logits = attention_logits.view(n * self.c_apheads, h * w, h * w)
         attention = torch.nn.functional.softmax(attention_logits, dim=1)
-        attention_scale = 0.1 / torch.sqrt(torch.sum(torch.square(attention), dim=1, keepdim=True)) # n*heads, 1, h*w
+        attention_scale = 0.1 / torch.sqrt(torch.sum(torch.square(attention), dim=1, keepdim=True))  # n*heads, 1, h*w
 
         outg = self.normg(outg, mask=mask, mask_sum=mask_sum)
-        outg = self.actg(outg).view(n*self.c_apheads, self.c_gpool//self.c_apheads, h*w)
+        outg = self.actg(outg).view(n * self.c_apheads, self.c_gpool // self.c_apheads, h * w)
 
         out_pool1 = torch.bmm(outg, attention)
         out_pool2 = out_pool1 * attention_scale
-        out_pool1 = out_pool1.view(n, self.c_gpool, h*w)
-        out_pool2 = out_pool2.view(n, self.c_gpool, h*w)
+        out_pool1 = out_pool1.view(n, self.c_gpool, h * w)
+        out_pool2 = out_pool2.view(n, self.c_gpool, h * w)
 
         outg = torch.cat((out_pool1, out_pool2), dim=1).view(n, 2 * self.c_gpool, h, w) * mask
         outg = self.conv_mix(outg)
@@ -576,14 +588,14 @@ class KataConvAndAttentionPool(torch.nn.Module):
 
 class NormActConv(torch.nn.Module):
     def __init__(
-        self,
-        c_in: int,
-        c_out: int,
-        c_gpool: Optional[int],
-        config: modelconfigs.ModelConfig,
-        activation: str,
-        kernel_size: int,
-        fixup_use_gamma: bool,
+            self,
+            c_in: int,
+            c_out: int,
+            c_gpool: Optional[int],
+            config: modelconfigs.ModelConfig,
+            activation: str,
+            kernel_size: int,
+            fixup_use_gamma: bool,
     ):
         super(NormActConv, self).__init__()
         self.c_in = c_in
@@ -600,10 +612,12 @@ class NormActConv(torch.nn.Module):
 
         if c_gpool is not None:
             if config["use_attention_pool"]:
-                self.convpool = KataConvAndAttentionPool(c_in=c_in, c_out=c_out, c_gpool=c_gpool, config=config, activation=activation)
+                self.convpool = KataConvAndAttentionPool(c_in=c_in, c_out=c_out, c_gpool=c_gpool, config=config,
+                                                         activation=activation)
                 self.conv = None
             else:
-                self.convpool = KataConvAndGPool(c_in=c_in, c_out=c_out, c_gpool=c_gpool, config=config, activation=activation)
+                self.convpool = KataConvAndGPool(c_in=c_in, c_out=c_out, c_gpool=c_gpool, config=config,
+                                                 activation=activation)
                 self.conv = None
         else:
             self.conv = torch.nn.Conv2d(c_in, c_out, kernel_size=kernel_size, padding="same", bias=False)
@@ -619,19 +633,19 @@ class NormActConv(torch.nn.Module):
             self.convpool.initialize(scale=scale)
         else:
             if self.conv1x1 is not None:
-                init_weights(self.conv1x1.weight, self.activation, scale=scale*0.6)
-                init_weights(self.conv.weight, self.activation, scale=scale*0.8)
+                init_weights(self.conv1x1.weight, self.activation, scale=scale * 0.6)
+                init_weights(self.conv.weight, self.activation, scale=scale * 0.8)
             else:
                 if self.use_repvgg_init:
-                    init_weights(self.conv.weight, self.activation, scale=scale*0.8)
-                    center_bonus = self.conv.weight.new_zeros((self.conv.weight.shape[0],self.conv.weight.shape[1]),requires_grad=False)
-                    init_weights(center_bonus, self.activation, scale=scale*0.6)
-                    self.conv.weight[:,:,1,1] += center_bonus
+                    init_weights(self.conv.weight, self.activation, scale=scale * 0.8)
+                    center_bonus = self.conv.weight.new_zeros((self.conv.weight.shape[0], self.conv.weight.shape[1]),
+                                                              requires_grad=False)
+                    init_weights(center_bonus, self.activation, scale=scale * 0.6)
+                    self.conv.weight[:, :, 1, 1] += center_bonus
                 else:
                     init_weights(self.conv.weight, self.activation, scale=scale)
 
-
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         self.norm.add_reg_dict(reg_dict)
         if self.convpool is not None:
             self.convpool.add_reg_dict(reg_dict)
@@ -677,13 +691,13 @@ class NormActConv(torch.nn.Module):
 
 class ResBlock(torch.nn.Module):
     def __init__(
-        self,
-        name: str,
-        c_main: int,
-        c_mid: int,
-        c_gpool: Optional[int],
-        config: modelconfigs.ModelConfig,
-        activation: str,
+            self,
+            name: str,
+            c_main: int,
+            c_mid: int,
+            c_gpool: Optional[int],
+            config: modelconfigs.ModelConfig,
+            activation: str,
     ):
         super(ResBlock, self).__init__()
         self.name = name
@@ -718,7 +732,7 @@ class ResBlock(torch.nn.Module):
             self.normactconv1.initialize(scale=1.0)
             self.normactconv2.initialize(scale=1.0)
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         self.normactconv1.add_reg_dict(reg_dict)
         self.normactconv2.add_reg_dict(reg_dict)
 
@@ -748,14 +762,14 @@ class ResBlock(torch.nn.Module):
 
 class BottleneckResBlock(torch.nn.Module):
     def __init__(
-        self,
-        name: str,
-        internal_length: int,
-        c_main: int,
-        c_mid: int,
-        c_gpool: Optional[int],
-        config: modelconfigs.ModelConfig,
-        activation: str,
+            self,
+            name: str,
+            internal_length: int,
+            c_main: int,
+            c_mid: int,
+            c_gpool: Optional[int],
+            config: modelconfigs.ModelConfig,
+            activation: str,
     ):
         super(BottleneckResBlock, self).__init__()
         self.name = name
@@ -783,7 +797,7 @@ class BottleneckResBlock(torch.nn.Module):
             kernel_size=3,
             fixup_use_gamma=False,
         ))
-        for i in range(self.internal_length-1):
+        for i in range(self.internal_length - 1):
             self.normactconvstack.append(NormActConv(
                 c_in=self.normactconvstack[-1].c_out,
                 c_out=c_mid,
@@ -821,7 +835,7 @@ class BottleneckResBlock(torch.nn.Module):
                 self.normactconvstack[i].initialize(scale=1.0)
             self.normactconvq.initialize(scale=1.0)
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         self.normactconvp.add_reg_dict(reg_dict)
         for i in range(self.internal_length):
             self.normactconvstack[i].add_reg_dict(reg_dict)
@@ -859,14 +873,14 @@ class BottleneckResBlock(torch.nn.Module):
 
 class NestedBottleneckResBlock(torch.nn.Module):
     def __init__(
-        self,
-        name: str,
-        internal_length: int,
-        c_main: int,
-        c_mid: int,
-        c_gpool: Optional[int],
-        config: modelconfigs.ModelConfig,
-        activation: str,
+            self,
+            name: str,
+            internal_length: int,
+            c_main: int,
+            c_mid: int,
+            c_gpool: Optional[int],
+            config: modelconfigs.ModelConfig,
+            activation: str,
     ):
         super(NestedBottleneckResBlock, self).__init__()
         self.name = name
@@ -887,7 +901,7 @@ class NestedBottleneckResBlock(torch.nn.Module):
         self.blockstack = torch.nn.ModuleList()
         for i in range(self.internal_length):
             self.blockstack.append(ResBlock(
-                name=name+"-sub"+str(i),
+                name=name + "-sub" + str(i),
                 c_main=c_mid,
                 c_mid=c_mid,
                 c_gpool=(c_gpool if i == 0 else None),
@@ -914,15 +928,15 @@ class NestedBottleneckResBlock(torch.nn.Module):
         elif self.norm_kind == "fixscale" or self.norm_kind == "fixbrenorm" or self.norm_kind == "fixscaleonenorm":
             self.normactconvp.initialize(scale=1.0, norm_scale=fixup_scale)
             for i in range(self.internal_length):
-                self.blockstack[i].initialize(fixup_scale=1.0 / math.sqrt(i+1.0))
-            self.normactconvq.initialize(scale=1.0, norm_scale=1.0 / math.sqrt(self.internal_length+1.0))
+                self.blockstack[i].initialize(fixup_scale=1.0 / math.sqrt(i + 1.0))
+            self.normactconvq.initialize(scale=1.0, norm_scale=1.0 / math.sqrt(self.internal_length + 1.0))
         else:
             self.normactconvp.initialize(scale=1.0)
             for i in range(self.internal_length):
                 self.blockstack[i].initialize(fixup_scale=1.0)
             self.normactconvq.initialize(scale=1.0)
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         self.normactconvp.add_reg_dict(reg_dict)
         for i in range(self.internal_length):
             self.blockstack[i].add_reg_dict(reg_dict)
@@ -958,19 +972,18 @@ class NestedBottleneckResBlock(torch.nn.Module):
         return x + out
 
 
-
 class NestedNestedBottleneckResBlock(torch.nn.Module):
     def __init__(
-        self,
-        name: str,
-        internal_length: int,
-        sub_internal_length: int,
-        c_main: int,
-        c_outermid: int,
-        c_mid: int,
-        c_gpool: Optional[int],
-        config: modelconfigs.ModelConfig,
-        activation: str,
+            self,
+            name: str,
+            internal_length: int,
+            sub_internal_length: int,
+            c_main: int,
+            c_outermid: int,
+            c_mid: int,
+            c_gpool: Optional[int],
+            config: modelconfigs.ModelConfig,
+            activation: str,
     ):
         super(NestedNestedBottleneckResBlock, self).__init__()
         self.name = name
@@ -991,7 +1004,7 @@ class NestedNestedBottleneckResBlock(torch.nn.Module):
         self.blockstack = torch.nn.ModuleList()
         for i in range(self.internal_length):
             self.blockstack.append(NestedBottleneckResBlock(
-                name=name+"-sub"+str(i),
+                name=name + "-sub" + str(i),
                 internal_length=sub_internal_length,
                 c_main=c_outermid,
                 c_mid=c_mid,
@@ -1019,15 +1032,15 @@ class NestedNestedBottleneckResBlock(torch.nn.Module):
         elif self.norm_kind == "fixscale" or self.norm_kind == "fixbrenorm" or self.norm_kind == "fixscaleonenorm":
             self.normactconvp.initialize(scale=1.0, norm_scale=fixup_scale)
             for i in range(self.internal_length):
-                self.blockstack[i].initialize(fixup_scale=1.0 / math.sqrt(i+1.0))
-            self.normactconvq.initialize(scale=1.0, norm_scale=1.0 / math.sqrt(self.internal_length+1.0))
+                self.blockstack[i].initialize(fixup_scale=1.0 / math.sqrt(i + 1.0))
+            self.normactconvq.initialize(scale=1.0, norm_scale=1.0 / math.sqrt(self.internal_length + 1.0))
         else:
             self.normactconvp.initialize(scale=1.0)
             for i in range(self.internal_length):
                 self.blockstack[i].initialize(fixup_scale=1.0)
             self.normactconvq.initialize(scale=1.0)
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         self.normactconvp.add_reg_dict(reg_dict)
         for i in range(self.internal_length):
             self.blockstack[i].add_reg_dict(reg_dict)
@@ -1101,7 +1114,6 @@ class PolicyHead(torch.nn.Module):
         self.act2 = act(activation)
         self.conv2p = torch.nn.Conv2d(c_p1, self.num_policy_outputs, kernel_size=1, padding="same", bias=False)
 
-
     def initialize(self):
         # Scaling so that variance on the p and g branches adds up to 1.0
         p_scale = 0.8
@@ -1114,7 +1126,7 @@ class PolicyHead(torch.nn.Module):
         init_weights(self.linear_pass.weight, "identity", scale=scale_output)
         init_weights(self.conv2p.weight, "identity", scale=scale_output)
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         reg_dict["output"].append(self.conv1p.weight)
         reg_dict["output"].append(self.conv1g.weight)
         reg_dict["output"].append(self.linear_g.weight)
@@ -1129,16 +1141,16 @@ class PolicyHead(torch.nn.Module):
     def add_brenorm_clippage(self, upper_rclippage, lower_rclippage, dclippage):
         pass
 
-    def forward(self, x, mask, mask_sum_hw, mask_sum:float):
+    def forward(self, x, mask, mask_sum_hw, mask_sum: float):
         outp = self.conv1p(x)
         outg = self.conv1g(x)
 
         outg = self.biasg(outg, mask=mask, mask_sum=mask_sum)
         outg = self.actg(outg)
-        outg = self.gpool(outg, mask=mask, mask_sum_hw=mask_sum_hw).squeeze(-1).squeeze(-1) # NC
+        outg = self.gpool(outg, mask=mask, mask_sum_hw=mask_sum_hw).squeeze(-1).squeeze(-1)  # NC
 
-        outpass = self.linear_pass(outg) # NC
-        outg = self.linear_g(outg).unsqueeze(-1).unsqueeze(-1) # NCHW
+        outpass = self.linear_pass(outg)  # NC
+        outg = self.linear_g(outg).unsqueeze(-1).unsqueeze(-1)  # NCHW
 
         outp = outp + outg
         outp = self.bias2(outp, mask=mask, mask_sum=mask_sum)
@@ -1149,7 +1161,7 @@ class PolicyHead(torch.nn.Module):
         # mask out parts outside the board by making them a huge neg number, so that they're 0 after softmax
         outpolicy = outpolicy - (1.0 - mask) * 5000.0
         # NC(HW) concat with NC1
-        return torch.cat((outpolicy.view(outpolicy.shape[0],outpolicy.shape[1],-1), outpass.unsqueeze(-1)),dim=2)
+        return torch.cat((outpolicy.view(outpolicy.shape[0], outpolicy.shape[1], -1), outpass.unsqueeze(-1)), dim=2)
 
 
 class ValueHead(torch.nn.Module):
@@ -1177,7 +1189,7 @@ class ValueHead(torch.nn.Module):
         self.conv_seki = torch.nn.Conv2d(c_in, 4, kernel_size=1, padding="same", bias=False)
 
         self.pos_len = pos_len
-        self.scorebelief_mid = self.pos_len*self.pos_len + EXTRA_SCORE_DISTR_RADIUS
+        self.scorebelief_mid = self.pos_len * self.pos_len + EXTRA_SCORE_DISTR_RADIUS
         self.scorebelief_len = self.scorebelief_mid * 2
         self.num_scorebeliefs = num_scorebeliefs
         self.c_sv2 = c_sv2
@@ -1189,21 +1201,20 @@ class ValueHead(torch.nn.Module):
         self.linear_smix = torch.nn.Linear(3 * c_v1, num_scorebeliefs, bias=True)
 
         self.register_buffer("score_belief_offset_vector", torch.tensor(
-            data=[(float(i-self.scorebelief_mid)+0.5) for i in range(self.scorebelief_len)],
+            data=[(float(i - self.scorebelief_mid) + 0.5) for i in range(self.scorebelief_len)],
             dtype=torch.float32,
             requires_grad=False,
         ), persistent=False)
         self.register_buffer("score_belief_offset_bias_vector", torch.tensor(
-            data=[0.05 * (float(i-self.scorebelief_mid)+0.5) for i in range(self.scorebelief_len)],
+            data=[0.05 * (float(i - self.scorebelief_mid) + 0.5) for i in range(self.scorebelief_len)],
             dtype=torch.float32,
             requires_grad=False,
         ), persistent=False)
         self.register_buffer("score_belief_parity_vector", torch.tensor(
-            [0.5-float((i-self.scorebelief_mid) % 2) for i in range(self.scorebelief_len)],
+            [0.5 - float((i - self.scorebelief_mid) % 2) for i in range(self.scorebelief_len)],
             dtype=torch.float32,
             requires_grad=False,
         ), persistent=False)
-
 
     def initialize(self):
         bias_scale = 0.2
@@ -1215,10 +1226,12 @@ class ValueHead(torch.nn.Module):
         init_weights(self.linear_valuehead.bias, "identity", scale=bias_scale, fan_tensor=self.linear_valuehead.weight)
 
         init_weights(self.linear_miscvaluehead.weight, "identity", scale=1.0)
-        init_weights(self.linear_miscvaluehead.bias, "identity", scale=bias_scale, fan_tensor=self.linear_miscvaluehead.weight)
+        init_weights(self.linear_miscvaluehead.bias, "identity", scale=bias_scale,
+                     fan_tensor=self.linear_miscvaluehead.weight)
 
         init_weights(self.linear_moremiscvaluehead.weight, "identity", scale=1.0)
-        init_weights(self.linear_moremiscvaluehead.bias, "identity", scale=bias_scale, fan_tensor=self.linear_moremiscvaluehead.weight)
+        init_weights(self.linear_moremiscvaluehead.bias, "identity", scale=bias_scale,
+                     fan_tensor=self.linear_moremiscvaluehead.weight)
 
         aux_spatial_output_scale = 0.2
         init_weights(self.conv_ownership.weight, "identity", scale=aux_spatial_output_scale)
@@ -1233,11 +1246,12 @@ class ValueHead(torch.nn.Module):
 
         scorebelief_output_scale = 0.5
         init_weights(self.linear_s3.weight, "identity", scale=scorebelief_output_scale)
-        init_weights(self.linear_s3.bias, "identity", scale=scorebelief_output_scale*bias_scale, fan_tensor=self.linear_s3.weight)
+        init_weights(self.linear_s3.bias, "identity", scale=scorebelief_output_scale * bias_scale,
+                     fan_tensor=self.linear_s3.weight)
         init_weights(self.linear_smix.weight, "identity", scale=1.0)
         init_weights(self.linear_smix.bias, "identity", scale=bias_scale, fan_tensor=self.linear_smix.weight)
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         reg_dict["output"].append(self.conv1.weight)
         reg_dict["output"].append(self.linear2.weight)
         reg_dict["output_noreg"].append(self.linear2.bias)
@@ -1267,7 +1281,7 @@ class ValueHead(torch.nn.Module):
     def add_brenorm_clippage(self, upper_rclippage, lower_rclippage, dclippage):
         pass
 
-    def forward(self, x, mask, mask_sum_hw, mask_sum:float, input_global):
+    def forward(self, x, mask, mask_sum_hw, mask_sum: float, input_global):
         outv1 = x
         outv1 = self.conv1(outv1)
         outv1 = self.bias1(outv1, mask=mask, mask_sum=mask_sum)
@@ -1290,20 +1304,23 @@ class ValueHead(torch.nn.Module):
         # Score belief head
         batch_size = x.shape[0]
         outsv2 = (
-            self.linear_s2(outpooled).view(batch_size,1,self.c_sv2) +
-            self.linear_s2off(self.score_belief_offset_bias_vector.view(1,self.scorebelief_len,1)) +
-            self.linear_s2par((self.score_belief_parity_vector.view(1,self.scorebelief_len) * input_global[:,-1:]).view(batch_size,self.scorebelief_len,1))
-        ) # N,scorebelief_len,c_sv2
+                self.linear_s2(outpooled).view(batch_size, 1, self.c_sv2) +
+                self.linear_s2off(self.score_belief_offset_bias_vector.view(1, self.scorebelief_len, 1)) +
+                self.linear_s2par(
+                    (self.score_belief_parity_vector.view(1, self.scorebelief_len) * input_global[:, -1:]).view(
+                        batch_size, self.scorebelief_len, 1))
+        )  # N,scorebelief_len,c_sv2
 
         outsv2 = self.act2(outsv2)
-        outsv3 = self.linear_s3(outsv2) # N, scorebelief_len, num_scorebeliefs
+        outsv3 = self.linear_s3(outsv2)  # N, scorebelief_len, num_scorebeliefs
 
-        outsmix = self.linear_smix(outpooled) # N, num_scorebeliefs
+        outsmix = self.linear_smix(outpooled)  # N, num_scorebeliefs
         outsmix_logweights = torch.nn.functional.log_softmax(outsmix, dim=1)
         # For each of num_scorebeliefs, compute softmax to make it into probability distribution
         out_scorebelief_logprobs = torch.nn.functional.log_softmax(outsv3, dim=1)
         # Take the mixture distribution weighted by outsmix_weights
-        out_scorebelief_logprobs = torch.logsumexp(out_scorebelief_logprobs + outsmix_logweights.view(-1, 1, self.num_scorebeliefs), dim=2)
+        out_scorebelief_logprobs = torch.logsumexp(
+            out_scorebelief_logprobs + outsmix_logweights.view(-1, 1, self.num_scorebeliefs), dim=2)
 
         return (
             out_value,
@@ -1315,6 +1332,7 @@ class ValueHead(torch.nn.Module):
             out_seki,
             out_scorebelief_logprobs,
         )
+
 
 class Model(torch.nn.Module):
     def __init__(self, config: modelconfigs.ModelConfig, pos_len: int):
@@ -1480,7 +1498,8 @@ class Model(torch.nn.Module):
             self.pos_len,
         )
         if self.has_intermediate_head:
-            self.norm_intermediate_trunkfinal = NormMask(self.c_trunk, self.config, fixup_use_gamma=False, is_last_batchnorm=True)
+            self.norm_intermediate_trunkfinal = NormMask(self.c_trunk, self.config, fixup_use_gamma=False,
+                                                         is_last_batchnorm=True)
             self.act_intermediate_trunkfinal = act(self.activation)
             self.intermediate_policy_head = PolicyHead(
                 self.c_trunk,
@@ -1500,7 +1519,6 @@ class Model(torch.nn.Module):
                 self.pos_len,
             )
 
-
     def initialize(self):
         with torch.no_grad():
             spatial_scale = 0.8
@@ -1514,8 +1532,8 @@ class Model(torch.nn.Module):
                     block.initialize(fixup_scale=fixup_scale)
             elif self.norm_kind == "fixscale" or self.norm_kind == "fixbrenorm" or self.norm_kind == "fixscaleonenorm":
                 for i, block in enumerate(self.blocks):
-                    block.initialize(fixup_scale=1.0 / math.sqrt(i+1.0))
-                self.norm_trunkfinal.set_scale(1.0 / math.sqrt(self.num_total_blocks+1.0))
+                    block.initialize(fixup_scale=1.0 / math.sqrt(i + 1.0))
+                self.norm_trunkfinal.set_scale(1.0 / math.sqrt(self.num_total_blocks + 1.0))
             else:
                 for block in self.blocks:
                     block.initialize(fixup_scale=1.0)
@@ -1532,7 +1550,7 @@ class Model(torch.nn.Module):
     def get_has_intermediate_head(self) -> bool:
         return self.has_intermediate_head
 
-    def add_reg_dict(self, reg_dict:Dict[str,List]):
+    def add_reg_dict(self, reg_dict: Dict[str, List]):
         reg_dict["normal"] = []
         reg_dict["normal_gamma"] = []
         reg_dict["output"] = []
@@ -1550,7 +1568,6 @@ class Model(torch.nn.Module):
             self.norm_intermediate_trunkfinal.add_reg_dict(reg_dict)
             self.intermediate_policy_head.add_reg_dict(reg_dict)
             self.intermediate_value_head.add_reg_dict(reg_dict)
-
 
     def set_brenorm_params(self, renorm_avg_momentum: float, rmax: float, dmax: float):
         for block in self.blocks:
@@ -1583,7 +1600,7 @@ class Model(torch.nn.Module):
         # np.set_printoptions(formatter={'float_kind':float_formatter}, threshold=1000000, linewidth=10000)
 
         mask = input_spatial[:, 0:1, :, :].contiguous()
-        mask_sum_hw = torch.sum(mask,dim=(2,3),keepdim=True)
+        mask_sum_hw = torch.sum(mask, dim=(2, 3), keepdim=True)
         mask_sum = torch.sum(mask)
 
         x_spatial = self.conv_spatial(input_spatial)
@@ -1615,7 +1632,8 @@ class Model(torch.nn.Module):
                 iout_futurepos,
                 iout_seki,
                 iout_scorebelief_logprobs,
-            ) = self.intermediate_value_head(iout, mask=mask, mask_sum_hw=mask_sum_hw, mask_sum=mask_sum, input_global=input_global)
+            ) = self.intermediate_value_head(iout, mask=mask, mask_sum_hw=mask_sum_hw, mask_sum=mask_sum,
+                                             input_global=input_global)
 
             for block in self.blocks[self.intermediate_head_blocks:]:
                 # print("TENSOR BEFORE BLOCK")
@@ -1676,16 +1694,16 @@ class Model(torch.nn.Module):
             )
         else:
             return ((
-                out_policy,
-                out_value,
-                out_miscvalue,
-                out_moremiscvalue,
-                out_ownership,
-                out_scoring,
-                out_futurepos,
-                out_seki,
-                out_scorebelief_logprobs,
-            ),)
+                        out_policy,
+                        out_value,
+                        out_miscvalue,
+                        out_moremiscvalue,
+                        out_ownership,
+                        out_scoring,
+                        out_futurepos,
+                        out_seki,
+                        out_scorebelief_logprobs,
+                    ),)
 
     def float32ify_output(self, outputs_byheads):
         return tuple(self.float32ify_single_heads_output(outputs) for outputs in outputs_byheads)
@@ -1732,42 +1750,68 @@ class Model(torch.nn.Module):
 
         policy_logits = out_policy
         value_logits = out_value
-        td_value_logits = torch.stack((out_miscvalue[:,4:7], out_miscvalue[:,7:10], out_moremiscvalue[:,2:5]), dim=1)
-        pred_td_score = out_moremiscvalue[:,5:8] * self.td_score_multiplier
+        td_value_logits = torch.stack((out_miscvalue[:, 4:7], out_miscvalue[:, 7:10], out_moremiscvalue[:, 2:5]), dim=1)
+        pred_td_score = out_moremiscvalue[:, 5:8] * self.td_score_multiplier
         ownership_pretanh = out_ownership
         pred_scoring = out_scoring
         futurepos_pretanh = out_futurepos
         seki_logits = out_seki
         pred_scoremean = out_miscvalue[:, 0] * self.scoremean_multiplier
-        pred_scorestdev = SoftPlusWithGradientFloorFunction.apply(out_miscvalue[:, 1], 0.05, False) * self.scorestdev_multiplier
+        pred_scorestdev = SoftPlusWithGradientFloorFunction.apply(out_miscvalue[:, 1], 0.05,
+                                                                  False) * self.scorestdev_multiplier
         pred_lead = out_miscvalue[:, 2] * self.lead_multiplier
-        pred_variance_time = SoftPlusWithGradientFloorFunction.apply(out_miscvalue[:, 3], 0.05, False) * self.variance_time_multiplier
+        pred_variance_time = SoftPlusWithGradientFloorFunction.apply(out_miscvalue[:, 3], 0.05,
+                                                                     False) * self.variance_time_multiplier
         if self.config["version"] < 14:
-            pred_shortterm_value_error = SoftPlusWithGradientFloorFunction.apply(out_moremiscvalue[:,0], 0.05, False) * self.shortterm_value_error_multiplier
-            pred_shortterm_score_error = SoftPlusWithGradientFloorFunction.apply(out_moremiscvalue[:,1], 0.05, False) * self.shortterm_score_error_multiplier
+            pred_shortterm_value_error = SoftPlusWithGradientFloorFunction.apply(out_moremiscvalue[:, 0], 0.05,
+                                                                                 False) * self.shortterm_value_error_multiplier
+            pred_shortterm_score_error = SoftPlusWithGradientFloorFunction.apply(out_moremiscvalue[:, 1], 0.05,
+                                                                                 False) * self.shortterm_score_error_multiplier
         else:
-            pred_shortterm_value_error = SoftPlusWithGradientFloorFunction.apply(out_moremiscvalue[:,0], 0.05, True) * self.shortterm_value_error_multiplier
-            pred_shortterm_score_error = SoftPlusWithGradientFloorFunction.apply(out_moremiscvalue[:,1], 0.05, True) * self.shortterm_score_error_multiplier
+            pred_shortterm_value_error = SoftPlusWithGradientFloorFunction.apply(out_moremiscvalue[:, 0], 0.05,
+                                                                                 True) * self.shortterm_value_error_multiplier
+            pred_shortterm_score_error = SoftPlusWithGradientFloorFunction.apply(out_moremiscvalue[:, 1], 0.05,
+                                                                                 True) * self.shortterm_score_error_multiplier
         scorebelief_logits = out_scorebelief_logprobs
 
         return (
-            policy_logits,      # N, num_policy_outputs, move
-            value_logits,       # N, {win,loss,noresult}
-            td_value_logits,    # N, {long, mid, short} {win,loss,noresult}
-            pred_td_score,      # N, {long, mid, short}
+            policy_logits,  # N, num_policy_outputs, move
+            value_logits,  # N, {win,loss,noresult}
+            td_value_logits,  # N, {long, mid, short} {win,loss,noresult}
+            pred_td_score,  # N, {long, mid, short}
             ownership_pretanh,  # N, 1, y, x
-            pred_scoring,       # N, 1, y, x
+            pred_scoring,  # N, 1, y, x
             futurepos_pretanh,  # N, 2, y, x
-            seki_logits,        # N, 4, y, x
-            pred_scoremean,     # N
-            pred_scorestdev,    # N
-            pred_lead,          # N
-            pred_variance_time, # N
-            pred_shortterm_value_error, # N
-            pred_shortterm_score_error, # N
-            scorebelief_logits, # N, 2 * (self.pos_len*self.pos_len + EXTRA_SCORE_DISTR_RADIUS)
+            seki_logits,  # N, 4, y, x
+            pred_scoremean,  # N
+            pred_scorestdev,  # N
+            pred_lead,  # N
+            pred_variance_time,  # N
+            pred_shortterm_value_error,  # N
+            pred_shortterm_score_error,  # N
+            scorebelief_logits,  # N, 2 * (self.pos_len*self.pos_len + EXTRA_SCORE_DISTR_RADIUS)
         )
+
+    @staticmethod
+    def dump_tensor(w, file):
+        weights = w.detach().cpu()
+        shape = weights.shape
+        file.write("[")
+        idx = 0
+        for s in shape:
+            file.write(str(s))
+            if idx < len(shape) - 1:
+                file.write(", ")
+            idx += 1
+        file.write("] ")
+        for x in np.ndindex(shape):
+            v = weights[x].item()
+            file.write(str(v) + ", ")
+        file.write("\n")
 
     @staticmethod
     def dump_weights(swa_model, out_file_nnue_weights_path):
         out_file_nnue_weights = open(out_file_nnue_weights_path, "w")
+        spatial_conv_weights = swa_model.module.conv_spatial.weight.data[:, :3, :, :] #second coordinate will be :2 in the long run
+        Model.dump_tensor(spatial_conv_weights, out_file_nnue_weights)
+        pass
