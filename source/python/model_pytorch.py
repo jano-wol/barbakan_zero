@@ -1793,17 +1793,10 @@ class Model(torch.nn.Module):
         )
 
     @staticmethod
-    def dump_tensor(w, file):
+    def dump_tensor(w, path, mode):
+        file = open(path, mode)
         weights = w.detach().cpu()
         shape = weights.shape
-        file.write("[")
-        idx = 0
-        for s in shape:
-            file.write(str(s))
-            if idx < len(shape) - 1:
-                file.write(" ")
-            idx += 1
-        file.write("] ")
         for x in np.ndindex(shape):
             v = weights[x].item()
             file.write(str(v) + " ")
@@ -1811,7 +1804,5 @@ class Model(torch.nn.Module):
 
     @staticmethod
     def dump_weights(swa_model, out_file_nnue_weights_path):
-        out_file_nnue_weights = open(out_file_nnue_weights_path, "w")
         spatial_conv_weights = swa_model.module.conv_spatial.weight.data[:, :3, :, :] #second coordinate will be :2 in the long run
-        Model.dump_tensor(spatial_conv_weights, out_file_nnue_weights)
-        pass
+        Model.dump_tensor(spatial_conv_weights, out_file_nnue_weights_path, 'a')

@@ -111,6 +111,7 @@ def main(args):
     # LOAD MODEL ---------------------------------------------------------------------
 
     model, swa_model, _ = load_model(checkpoint_file, use_swa, device=device, pos_len=pos_len, verbose=True)
+    open(out_file_nnue_weights_path, "w")
     Model.dump_weights(swa_model, out_file_nnue_weights_path)
     logging.info("Beginning test!")
     with torch.no_grad():
