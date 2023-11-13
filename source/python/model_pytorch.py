@@ -1847,12 +1847,18 @@ class Model(torch.nn.Module):
         y = trunk_normactconv02.norm.gamma.data
         trunk_norm2_weights = torch.cat((x, y), 0)
         trunk_conv2_weights = trunk_normactconv02.conv.weight
+        trunk_normactconv11 = swa_model.module.blocks[1].normactconv1
+        trunk_normactconv12 = swa_model.module.blocks[1].normactconv2
+        trunk_norm3_weights = trunk_normactconv11.norm.beta.data
+        #trunk_conv3_weights = trunk_normactconv11.conv.weight
+        #trunk_conv2_weights = trunk_normactconv12.conv.weight
         policy_head = swa_model.module.policy_head
         Model.dump_tensor(spatial_conv_weights, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(trunk_norm1_weights, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(trunk_conv1_weights, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(trunk_norm2_weights, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(trunk_conv2_weights, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(trunk_norm3_weights, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.conv1p.weight, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.conv1g.weight, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.linear_g.weight, out_file_nnue_weights_path, 'a')
