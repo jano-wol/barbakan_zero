@@ -1184,6 +1184,7 @@ class PolicyHead(torch.nn.Module):
 
         # mask out parts outside the board by making them a huge neg number, so that they're 0 after softmax
         outpolicy = outpolicy - (1.0 - mask) * 5000.0
+        Model.dump_tensor(outpolicy[0][0], 'compare_nnue_output/outpolicy', 'w')
         # NC(HW) concat with NC1
         return torch.cat((outpolicy.view(outpolicy.shape[0], outpolicy.shape[1], -1), outpass.unsqueeze(-1)), dim=2)
 
@@ -1878,3 +1879,5 @@ class Model(torch.nn.Module):
         Model.dump_tensor(policy_head.conv1g.weight, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.biasg.beta.data, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.linear_g.weight, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(policy_head.bias2.beta.data, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(policy_head.conv2p.weight, out_file_nnue_weights_path, 'a')
