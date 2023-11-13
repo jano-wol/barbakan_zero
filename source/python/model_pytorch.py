@@ -1319,6 +1319,7 @@ class ValueHead(torch.nn.Module):
 
         # Different subheads
         out_value = self.linear_valuehead(outv2)
+        Model.dump_tensor(out_value, 'compare_nnue_output/outvalue', 'w')
         out_miscvalue = self.linear_miscvaluehead(outv2)
         out_moremiscvalue = self.linear_moremiscvaluehead(outv2)
         out_ownership = self.conv_ownership(outv1) * mask
@@ -1862,6 +1863,13 @@ class Model(torch.nn.Module):
         trunk_conv5_weights = trunk_normactconv12.conv.weight
         trunk_final_norm_weights = swa_model.module.norm_trunkfinal.beta.data
         policy_head = swa_model.module.policy_head
+        value_head = swa_model.module.value_head
+        x = torch.flatten(value_head.linear2.weight.data)
+        y = torch.flatten(value_head.linear2.bias.data)
+        value_head_linear1_weights = torch.cat((x, y), 0)
+        x = torch.flatten(value_head.linear_valuehead.weight.data)
+        y = torch.flatten(value_head.linear_valuehead.bias.data)
+        value_head_linear2_weights = torch.cat((x, y), 0)
         Model.dump_tensor(spatial_conv_weights, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(trunk_norm1_weights, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(trunk_conv1_weights, out_file_nnue_weights_path, 'a')
@@ -1881,3 +1889,7 @@ class Model(torch.nn.Module):
         Model.dump_tensor(policy_head.linear_g.weight, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.bias2.beta.data, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.conv2p.weight[0], out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(value_head.conv1.weight, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(value_head.bias1.beta.data, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(value_head_linear1_weights, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(value_head_linear2_weights, out_file_nnue_weights_path, 'a')
