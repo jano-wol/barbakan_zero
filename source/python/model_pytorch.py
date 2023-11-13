@@ -1880,4 +1880,4 @@ class Model(torch.nn.Module):
         Model.dump_tensor(policy_head.biasg.beta.data, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.linear_g.weight, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.bias2.beta.data, out_file_nnue_weights_path, 'a')
-        Model.dump_tensor(policy_head.conv2p.weight, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(policy_head.conv2p.weight[0], out_file_nnue_weights_path, 'a')
