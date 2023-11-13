@@ -1174,6 +1174,7 @@ class PolicyHead(torch.nn.Module):
         Model.dump_tensor(outg, 'compare_nnue_output/policy_head_gpool_out', 'w')
         outpass = self.linear_pass(outg)  # NC
         outg = self.linear_g(outg).unsqueeze(-1).unsqueeze(-1)  # NCHW
+        Model.dump_tensor(outg, 'compare_nnue_output/policy_head_linear_out', 'w')
 
         outp = outp + outg
         outp = self.bias2(outp, mask=mask, mask_sum=mask_sum)
@@ -1843,3 +1844,4 @@ class Model(torch.nn.Module):
         Model.dump_tensor(conv2_weights, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.conv1p.weight, out_file_nnue_weights_path, 'a')
         Model.dump_tensor(policy_head.conv1g.weight, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(policy_head.linear_g.weight, out_file_nnue_weights_path, 'a')
