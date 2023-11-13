@@ -1820,7 +1820,10 @@ class Model(torch.nn.Module):
         )
 
     @staticmethod
+    @static_vars(dump=False)
     def dump_tensor(w, path_end, mode):
+        if not Model.dump_tensor.dump:
+            return
         test_folder = ''
         if mode == 'w':
             test_folder = get_test_data_folder()
