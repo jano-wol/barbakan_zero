@@ -6,11 +6,21 @@ import torch.nn.functional
 import torch.nn.init
 import packaging
 import packaging.version
+from path_util import get_test_data_folder
 from typing import List, Dict, Optional
 
 import modelconfigs
 
 EXTRA_SCORE_DISTR_RADIUS = 60
+
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+
+    return decorate
 
 
 def act(activation, inplace=False):
@@ -166,7 +176,7 @@ class NormMask(torch.nn.Module):
         self.use_gamma = (
                 ("bnorm_use_gamma" in config and config["bnorm_use_gamma"]) or
                 ((
-                             self.norm_kind == "fixup" or self.norm_kind == "fixscale" or self.norm_kind == "fixscaleonenorm") and fixup_use_gamma) or
+                         self.norm_kind == "fixup" or self.norm_kind == "fixscale" or self.norm_kind == "fixscaleonenorm") and fixup_use_gamma) or
                 force_use_gamma
         )
         self.c_in = c_in
@@ -664,6 +674,7 @@ class NormActConv(torch.nn.Module):
         if self.convpool is not None:
             self.convpool.add_brenorm_clippage(upper_rclippage, lower_rclippage, dclippage)
 
+    @static_vars(counter=0)
     def forward(self, x, mask, mask_sum_hw, mask_sum: float):
         """
         Parameters:
@@ -674,18 +685,24 @@ class NormActConv(torch.nn.Module):
 
         Returns: NCHW
         """
+        NormActConv.forward.counter += 1
+        counter = NormActConv.forward.counter
         out = x
         out = self.norm(out, mask=mask, mask_sum=mask_sum)
+        Model.dump_tensor(out, 'compare_nnue_output/NormActConv_norm_out_' + str(counter), 'w')
         out = self.act(out)
+        Model.dump_tensor(out, 'compare_nnue_output/NormActConv_act_out_' + str(counter), 'w')
         # print("TENSOR AFTER NORMACT")
         # print(out)
         if self.convpool is not None:
             out = self.convpool(out, mask=mask, mask_sum_hw=mask_sum_hw, mask_sum=mask_sum)
+            Model.dump_tensor(out, 'compare_nnue_output/NormActConv_convpool_out_' + str(counter), 'w')
         else:
             if self.conv1x1 is not None:
                 out = self.conv(out) + self.conv1x1(out)
             else:
                 out = self.conv(out)
+                Model.dump_tensor(out, 'compare_nnue_output/NormActConv_conv_out_' + str(counter), 'w')
         return out
 
 
@@ -744,6 +761,7 @@ class ResBlock(torch.nn.Module):
         self.normactconv1.add_brenorm_clippage(upper_rclippage, lower_rclippage, dclippage)
         self.normactconv2.add_brenorm_clippage(upper_rclippage, lower_rclippage, dclippage)
 
+    @static_vars(counter=0)
     def forward(self, x, mask, mask_sum_hw, mask_sum: float):
         """
         Parameters:
@@ -754,9 +772,12 @@ class ResBlock(torch.nn.Module):
 
         Returns: NCHW
         """
+        ResBlock.forward.counter += 1
+        counter = ResBlock.forward.counter
         out = x
         out = self.normactconv1(out, mask=mask, mask_sum_hw=mask_sum_hw, mask_sum=mask_sum)
         out = self.normactconv2(out, mask=mask, mask_sum_hw=mask_sum_hw, mask_sum=mask_sum)
+        Model.dump_tensor(x + out, 'compare_nnue_output/ResBlock_out_' + str(counter), 'w')
         return x + out
 
 
@@ -1143,12 +1164,14 @@ class PolicyHead(torch.nn.Module):
 
     def forward(self, x, mask, mask_sum_hw, mask_sum: float):
         outp = self.conv1p(x)
+        Model.dump_tensor(outp, 'compare_nnue_output/policy_head_conv1p_out', 'w')
         outg = self.conv1g(x)
-
+        Model.dump_tensor(outg, 'compare_nnue_output/policy_head_conv1g_out', 'w')
         outg = self.biasg(outg, mask=mask, mask_sum=mask_sum)
         outg = self.actg(outg)
+        Model.dump_tensor(outg, 'compare_nnue_output/policy_head_relu1_out', 'w')
         outg = self.gpool(outg, mask=mask, mask_sum_hw=mask_sum_hw).squeeze(-1).squeeze(-1)  # NC
-
+        Model.dump_tensor(outg, 'compare_nnue_output/policy_head_gpool_out', 'w')
         outpass = self.linear_pass(outg)  # NC
         outg = self.linear_g(outg).unsqueeze(-1).unsqueeze(-1)  # NCHW
 
@@ -1604,6 +1627,7 @@ class Model(torch.nn.Module):
         mask_sum = torch.sum(mask)
 
         x_spatial = self.conv_spatial(input_spatial)
+        Model.dump_tensor(x_spatial.data, 'compare_nnue_output/spatial_tensor_out', 'w')
         x_global = self.linear_global(input_global).unsqueeze(-1).unsqueeze(-1)
         out = x_spatial + x_global
         # print("TENSOR BEFORE TRUNK")
@@ -1651,8 +1675,10 @@ class Model(torch.nn.Module):
                 out = block(out, mask=mask, mask_sum_hw=mask_sum_hw, mask_sum=mask_sum)
                 count += 1
 
+        Model.dump_tensor(out, 'compare_nnue_output/res_blocks_out', 'w')
         out = self.norm_trunkfinal(out, mask=mask, mask_sum=mask_sum)
         out = self.act_trunkfinal(out)
+        Model.dump_tensor(out, 'compare_nnue_output/res_blocks_out_final', 'w')
 
         # print("MAIN")
         out_policy = self.policy_head(out, mask=mask, mask_sum_hw=mask_sum_hw, mask_sum=mask_sum)
@@ -1793,8 +1819,11 @@ class Model(torch.nn.Module):
         )
 
     @staticmethod
-    def dump_tensor(w, path, mode):
-        file = open(path, mode)
+    def dump_tensor(w, path_end, mode):
+        test_folder = ''
+        if mode == 'w':
+            test_folder = get_test_data_folder()
+        file = open(test_folder + path_end, mode)
         weights = w.detach().cpu()
         shape = weights.shape
         for x in np.ndindex(shape):
@@ -1804,5 +1833,13 @@ class Model(torch.nn.Module):
 
     @staticmethod
     def dump_weights(swa_model, out_file_nnue_weights_path):
-        spatial_conv_weights = swa_model.module.conv_spatial.weight.data[:, :3, :, :] #second coordinate will be :2 in the long run
+        sw_ref = swa_model.module.conv_spatial.weight
+        spatial_conv_weights = sw_ref.data[:, :3, :, :]  # second coordinate will be :2 in the long run
+        conv1_weights = swa_model.module.blocks[0].normactconv1.conv.weight
+        conv2_weights = swa_model.module.blocks[0].normactconv2.conv.weight
+        policy_head = swa_model.module.policy_head
         Model.dump_tensor(spatial_conv_weights, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(conv1_weights, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(conv2_weights, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(policy_head.conv1p.weight, out_file_nnue_weights_path, 'a')
+        Model.dump_tensor(policy_head.conv1g.weight, out_file_nnue_weights_path, 'a')
