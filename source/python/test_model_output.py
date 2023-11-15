@@ -58,6 +58,7 @@ if __name__ == "__main__":
     parser.add_argument('-batch-size', help='Batch size to use for testing', type=int, required=True)
     parser.add_argument('-use-swa', help='Use SWA model', action="store_true", required=False)
     parser.add_argument('-gpu-idx', help='GPU idx', type=int, required=False)
+    parser.add_argument('-in-file-games', help='Games file to get test positions', required=True)
     parser.add_argument('-out-file-value', help='output', required=True)
     parser.add_argument('-out-file-policy', help='output', required=True)
     parser.add_argument('-out-file-nnue-weights', help='output', required=True)
@@ -74,8 +75,11 @@ def main(args):
     batch_size = args["batch_size"]
     use_swa = True
     gpu_idx = args["gpu_idx"]
+    in_file_games_str = args["in_file_games"]
     out_file_value_str = args["out_file_value"]
     out_file_policy_str = args["out_file_policy"]
+    in_file_games_path = os.path.realpath(in_file_games_str)
+    in_file_games = open(in_file_games_path, "r")
     out_file_value_path = os.path.realpath(out_file_value_str)
     out_file_value = open(out_file_value_path, "w")
     out_file_policy_path = os.path.realpath(out_file_policy_str)
@@ -119,15 +123,21 @@ def main(args):
     Model.dump_weights(swa_model, out_file_nnue_weights_path)
     logging.info("Beginning test!")
     with torch.no_grad():
-        moves = [210, 191, 231, 189, 252]
-        [binary_input_nchw, global_input_nc] = get_input_tensors(moves, pos_len)
-        model_outputs = swa_model(binary_input_nchw.cuda(), global_input_nc.cuda())
-        value_tensor = model_outputs[0][1][0]
-        policy_tensor = model_outputs[0][0][0][0]
-        for i in range(3):
-            out_file_value.write(str(value_tensor[i].item()) + "\n")
-        for i in range(pos_len * pos_len):
-            out_file_policy.write(str(policy_tensor[i].item()) + "\n")
+        for game_idx in range(30):
+            curr_game = in_file_games.readline().rstrip()
+            moves_str = curr_game.split(' ')
+            moves = [int(move_str) for move_str in moves_str]
+            moves = moves[: (len(moves) * 2 // 3)]
+            [binary_input_nchw, global_input_nc] = get_input_tensors(moves, pos_len)
+            model_outputs = swa_model(binary_input_nchw.cuda(), global_input_nc.cuda())
+            value_tensor = model_outputs[0][1][0]
+            policy_tensor = model_outputs[0][0][0][0]
+            for i in range(3):
+                out_file_value.write(f"{value_tensor[i].item():.6f}\n")
+            policies = [policy_tensor[i].item() for i in range(pos_len * pos_len)]
+            policies.sort(reverse=True)
+            for i in range(3):
+                out_file_policy.write(f"{policies[i]:.6f}\n")
 
 
 if __name__ == "__main__":
