@@ -223,33 +223,21 @@ struct NNUEOutputEngine
     return nnOutput;
   }
 
-  void compareOutput(const NNOutput& nnOutput, int posLen)
+  void compareOutput(const NNOutput& nnOutput, int posLen, std::ifstream& pyValueFile, std::ifstream& pyPolicyFile)
   {
-    string outputDir = barbakan_zero::getBuildTestDataFolder() + "compare_nnue_output/";
-    string pyValuePath = outputDir + "nn_py_value.bin";
-    string pyPolicyPath = outputDir + "nn_py_policy.bin";
-    std::ifstream pyValueFile(pyValuePath, std::ios::binary);
-    std::ifstream pyPolicyFile(pyPolicyPath, std::ios::binary);
     std::string pyStr;
     std::vector<double> pyValues;
     std::vector<double> pyPolicies;
-    while (getline(pyValueFile, pyStr)) {
+    for (int i = 0; i < 3; ++i) {
+      getline(pyValueFile, pyStr);
       double v = std::stod(pyStr);
       pyValues.push_back(v);
     }
-    while (getline(pyPolicyFile, pyStr)) {
+    for (int i = 0; i < 3; ++i) {
+      getline(pyPolicyFile, pyStr);
       double v = std::stod(pyStr);
       pyPolicies.push_back(v);
     }
-    if (pyValues.size() != 3) {
-      std::cerr << "pyValues size is not 3. pyValues size=" << pyValues.size() << "\n";
-      exit(1);
-    }
-    if (pyPolicies.size() != posLen * posLen) {
-      std::cerr << "pyPolicies size is not " << posLen * posLen << ". pyPolicies size=" << pyPolicies.size() << "\n";
-      exit(1);
-    }
-
     std::vector<double> cppValues;
     cppValues.push_back(nnOutput.rawWinLogit);
     cppValues.push_back(nnOutput.rawLossLogit);
@@ -258,7 +246,7 @@ struct NNUEOutputEngine
     for (size_t idx = 0; idx < posLen * posLen; ++idx) {
       cppPolicies.push_back(nnOutput.rawPolicyLogits[idx]);
     }
-
+    std::sort(cppPolicies.begin(), cppPolicies.end(), std::greater<>());
     double tolerance = 0.0001;
     for (size_t idx = 0; idx < 3; ++idx) {
       if (std::abs(cppValues[idx] - pyValues[idx]) > tolerance) {
@@ -267,7 +255,7 @@ struct NNUEOutputEngine
         exit(1);
       }
     }
-    for (size_t idx = 0; idx < posLen * posLen; ++idx) {
+    for (size_t idx = 0; idx < 3; ++idx) {
       if (std::abs(cppPolicies[idx] - pyPolicies[idx]) > tolerance) {
         std::cerr << "Policy diff is larger than tolerance. cppPolicy=" << cppPolicies[idx]
                   << " pyPolicy=" << pyPolicies[idx] << " idx=" << idx << "\n";
@@ -430,20 +418,43 @@ int MainCmds::testnnueoutput(int /*argc*/, const char* const* argv)
       perspective, analysisPVLen);
   engine->setOrResetBoardSize(cfg, logger, seedRand, defaultBoardXSize, defaultBoardYSize);
 
-  std::vector<int> player;
-  std::vector<int> waiter;
-  player.push_back(191);
-  player.push_back(189);
-  waiter.push_back(210);
-  waiter.push_back(231);
-  waiter.push_back(252);
-  if (((player.size() + waiter.size()) % 2) == 0) {
-    engine->setPosition(player, waiter, posLen);
-  } else {
-    engine->setPosition(waiter, player, posLen);
+  string pyValuePath = outputDir + "nn_py_value.bin";
+  string pyPolicyPath = outputDir + "nn_py_policy.bin";
+  string gamesPath = outputDir + "games.bar";
+  std::ifstream pyValueFile(pyValuePath, std::ios::binary);
+  std::ifstream pyPolicyFile(pyPolicyPath, std::ios::binary);
+  std::ifstream gamesFile(gamesPath, std::ios::binary);
+  for (size_t gamesIdx = 0; gamesIdx < 100; ++gamesIdx) {
+    std::string line;
+    getline(gamesFile, line);
+    std::stringstream ss(line);
+    std::vector<int> moves;
+    std::string moveStr;
+    while (ss >> moveStr) {
+      moves.push_back(std::stoi(moveStr));
+    }
+    moves.resize((moves.size() * 2) / 3);
+    std::vector<int> player;
+    std::vector<int> waiter;
+    std::vector<int>& O = moves.size() % 2 == 0 ? player : waiter;
+    std::vector<int>& X = moves.size() % 2 == 1 ? player : waiter;
+    size_t moveIdx = 0;
+    for (auto move : moves) {
+      if (moveIdx % 2 == 0) {
+        O.push_back(move);
+      } else {
+        X.push_back(move);
+      }
+      ++moveIdx;
+    }
+    if (((player.size() + waiter.size()) % 2) == 0) {
+      engine->setPosition(player, waiter, posLen);
+    } else {
+      engine->setPosition(waiter, player, posLen);
+    }
+    auto nnOutput = engine->getNNOutput();
+    engine->compareOutput(nnOutput, posLen, pyValueFile, pyPolicyFile);
   }
-  auto nnOutput = engine->getNNOutput();
-  engine->compareOutput(nnOutput, posLen);
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();

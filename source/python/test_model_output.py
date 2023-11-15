@@ -123,7 +123,7 @@ def main(args):
     Model.dump_weights(swa_model, out_file_nnue_weights_path)
     logging.info("Beginning test!")
     with torch.no_grad():
-        for game_idx in range(30):
+        for game_idx in range(100):
             curr_game = in_file_games.readline().rstrip()
             moves_str = curr_game.split(' ')
             moves = [int(move_str) for move_str in moves_str]
