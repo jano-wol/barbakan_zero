@@ -915,7 +915,6 @@ void NNInputs::fillRowV7(
   int featureStride;
   int posStride;
   if(useNHWC) {
-    ASSERT_UNREACHABLE;
     featureStride = 1;
     posStride = NNInputs::NUM_FEATURES_SPATIAL_V7;
   }

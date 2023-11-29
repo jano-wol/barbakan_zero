@@ -1868,4 +1868,8 @@ bool NeuralNet::testEvaluateGlobalPoolingResidualBlock(
   return true;
 }
 
+ModelPostProcessParams NeuralNet::getPostProcessParams(const LoadedModel* loadedModel) {
+  return loadedModel->modelDesc.postProcessParams;
+}
+
 #endif  // USE_EIGEN_BACKEND

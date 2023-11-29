@@ -172,6 +172,7 @@ struct NestedBottleneckResidualBlockDesc {
 };
 
 constexpr int ORDINARY_BLOCK_KIND = 0;
+constexpr int DILATED_BLOCK_KIND = 1;
 constexpr int GLOBAL_POOLING_BLOCK_KIND = 2;
 constexpr int NESTED_BOTTLENECK_BLOCK_KIND = 3;
 
