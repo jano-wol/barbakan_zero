@@ -773,8 +773,7 @@ static void debugPrint4D(const string& name, ComputeHandleInternal* handle, cl_m
 
 static void debugPrintChannel(float* buf, int channelIdx, int posLen) {
   std::cout << "channelIdx=" << channelIdx << "\n";
-  for (int i = channelIdx * posLen * posLen; i < (channelIdx + 1) * posLen * posLen; ++i)
-  {
+  for (int i = channelIdx * posLen * posLen; i < (channelIdx + 1) * posLen * posLen; ++i) {
     std::cout << buf[i];
     if (i % posLen == posLen - 1)
     {
@@ -786,8 +785,7 @@ static void debugPrintChannel(float* buf, int channelIdx, int posLen) {
 
 
 static void debugPrintChannels(float* buf, int numChannels, int posLen) {
-  for (int i = 0; i < numChannels; ++i)
-  {
+  for (int i = 0; i < numChannels; ++i) {
     debugPrintChannel(buf, i, posLen);
   }
 }
@@ -2837,7 +2835,6 @@ void NeuralNet::getOutput(
     SymmetryHelpers::copyInputsWithSymmetry(rowSpatial, rowSpatialInput, 1, nnYLen, nnXLen, numSpatialFeatures, gpuHandle->inputsUseNHWC, inputBufs[nIdx]->symmetry);
   }
 
-  //debugPrintChannels(inputBuffers->userInputBuffer, 22, nnXLen);
   Buffers* buffers = gpuHandle->buffers.get();
 
   assert(inputBuffers->userInputBufferElts == buffers->inputElts);
