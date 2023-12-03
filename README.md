@@ -23,7 +23,7 @@ To check that you have a working repo for development run the followings from th
 ./source/scripts/test.sh release  
 (last message should be 'All tests passed')  
 
-Alternatively, it is possible to setup the work environment of the repo with Docker. For more info, please check part "Misc Docker". 
+Alternatively, it is possible to setup the work environment of the repo with Docker. For more info, please check part "Docker (misc)". 
 
 # Analyze with the engine
 Next to the executable (in ./build/release/bin/barbakan_zero) one need to copy a config file (default_gtp.cfg can be found in ./data/configs/gtp) and a model file (model.bin.gz can be found in ./data/model, or one can train a new model with the training pipeline).  
@@ -57,26 +57,26 @@ The training process hyperparameters are determined by the following files:
 ./source/scripts/train/synchronous_loop.sh  
 It is possible that as the training process evolves, some changes are needed in the constants. (e.g. one can try to experiment with NUM_GAMES_PER_CYCLE or surewinDepth etc.)
 
-# Misc Docker
+# Docker (misc)
 Prerequisite: Docker.
-From the root of the repo run (sudo might be needed):
-./source/scripts/misc/docker/build.sh 
+From the root of the repo run (sudo might be needed):  
+./source/scripts/misc/docker/build.sh  
 ./source/scripts/misc/docker/run.sh 
 
-In case run.sh produce the following error:
-Error response from daemon: could not select device driver "" with capabilities: [[gpu]].
-try the following commands on the host machine (sudo might be needed):
-apt-get install -y nvidia-container-toolkit
-apt install -y nvidia-docker2 
-systemctl daemon-reload
-systemctl restart docker
-and rerun
-./source/scripts/misc/docker/run.sh
+In case run.sh produce the following error:  
+Error response from daemon: could not select device driver "" with capabilities: [[gpu]].  
+try the following commands on the host machine (sudo might be needed):  
+apt-get install -y nvidia-container-toolkit  
+apt install -y nvidia-docker2   
+systemctl daemon-reload  
+systemctl restart docker  
+and rerun  
+./source/scripts/misc/docker/run.sh  
 
 In case run.sh is successful, a new command port is starting in the image. Now git has to be configured in the image by:
 git config --global --add safe.directory /barbakan_zero
 
-Finally, similarly to the conventional setup, it is possible to test that the repository is functioning correctly by calling:
+Finally, similarly to the conventional setup, it is possible to test that the repository is functioning correctly by calling:  
 ./source/scripts/configure.sh release  
 ./source/scripts/build.sh release  
 ./source/scripts/test.sh release  
