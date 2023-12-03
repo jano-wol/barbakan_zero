@@ -59,7 +59,7 @@ It is possible that as the training process evolves, some changes are needed in 
 
 # Misc Docker
 Prerequisite: Docker.
-Run (sudo might be needed):
+From the root of the repo run (sudo might be needed):
 ./source/scripts/misc/docker/build.sh 
 ./source/scripts/misc/docker/run.sh 
 
