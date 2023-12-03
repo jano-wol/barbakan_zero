@@ -73,7 +73,7 @@ systemctl restart docker
 and rerun  
 ./source/scripts/misc/docker/run.sh  
 
-In case run.sh is successful, a new command port is starting in the image. Now git has to be configured in the image by:
+In case run.sh is successful, a new command port is starting in the image. Now git has to be configured in the image by:  
 git config --global --add safe.directory /barbakan_zero
 
 Finally, similarly to the conventional setup, it is possible to test that the repository is functioning correctly by calling:  
