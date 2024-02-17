@@ -1,9 +1,7 @@
 # Barbakan_zero
 In this repo I will try to adapt KataGo's zero knowledge training pipeline to gomoku. This repo is a truncated version of repo:  
 https://github.com/lightvector/KataGo  
-As this is an experimental project derived form KataGo, I definitely recommend to investigate the KataGo repository for best practices. This repo is not matured, but helped me produce Barbakan engine, a strong gomoku program,  
-competing successfully on gomoku ai tournament:  
-https://gomocup.org/
+As this is an experimental project derived form KataGo, I definitely recommend to investigate the KataGo repository for best practices. This repo is not matured, but helped me produce Barbakan engine, a strong gomoku program, competing successfully on gomoku ai tournament: https://gomocup.org/
 
 
 # Setup repo
