@@ -179,7 +179,7 @@ endif()
 
 if(USE_TCMALLOC)
   message(STATUS "-DUSE_TCMALLOC=1 is set, using tcmalloc as the allocator")
-  find_library(TCMALLOC_LIB NAMES tcmalloc_minimal HINTS /usr)
+  find_library(TCMALLOC_LIB NAMES libtcmalloc.so.4)
   if(NOT TCMALLOC_LIB)
     message(FATAL_ERROR "Could not find tcmalloc")
   endif()
