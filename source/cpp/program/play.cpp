@@ -1418,7 +1418,7 @@ FinishedGameData* Play::runGame(
 }
 
 FinishedGameData* Play::runGame(
-  const Board& startBoard, Player startPla, const BoardHistory& startHist, ExtraBlackAndKomi extraBlackAndKomi,
+  const Board& startBoard, Player startPla, const BoardHistory& startHist, ExtraBlackAndKomi /*extraBlackAndKomi*/,
   MatchPairer::BotSpec& botSpecB, MatchPairer::BotSpec& botSpecW,
   Search* botB, Search* botW,
   bool doEndGameIfAllPassAlive, bool clearBotBeforeSearch,
@@ -1434,34 +1434,8 @@ FinishedGameData* Play::runGame(
   Board board(startBoard);
   BoardHistory hist(startHist);
   Player pla = startPla;
-  assert(!(extraBlackAndKomi.makeGameFair && extraBlackAndKomi.makeGameFairForEmptyBoard));
+  //assert(!(extraBlackAndKomi.makeGameFair && extraBlackAndKomi.makeGameFairForEmptyBoard));
   assert(!(playSettings.forSelfPlay && !clearBotBeforeSearch));
-
-  if(extraBlackAndKomi.makeGameFairForEmptyBoard) {
-    Board b(startBoard.x_size,startBoard.y_size);
-    BoardHistory h(b,pla,startHist.rules);
-    PlayUtils::adjustKomiToEven(botB,botW,b,h,pla,playSettings.compensateKomiVisits,logger,otherGameProps,gameRand);
-  }
-  if(extraBlackAndKomi.extraBlack > 0) {
-    double extraBlackTemperature = 1.0;
-    PlayUtils::playExtraBlack(botB,extraBlackAndKomi.extraBlack,board,hist,extraBlackTemperature,gameRand);
-    assert(hist.moveHistory.size() == 0);
-  }
-  if(extraBlackAndKomi.makeGameFair) {
-    //Adjust komi to be fair for the handicap according to what the bot thinks.
-    PlayUtils::adjustKomiToEven(botB,botW,board,hist,pla,playSettings.compensateKomiVisits,logger,otherGameProps,gameRand);
-  }
-  else if((extraBlackAndKomi.extraBlack > 0 || otherGameProps.isFork) &&
-          playSettings.fancyKomiVarying &&
-          gameRand.nextBool(extraBlackAndKomi.extraBlack > 0 ? 0.5 : 0.25)) {
-    double origKomi = hist.rules.komi;
-    //Adjust komi to be fair for the handicap according to what the bot thinks.
-    PlayUtils::adjustKomiToEven(botB,botW,board,hist,pla,playSettings.compensateKomiVisits,logger,otherGameProps,gameRand);
-    double newKomi = hist.rules.komi;
-    //Now, randomize between the old and new komi, with extra noise
-    double randKomi = gameRand.nextDouble(min(origKomi,newKomi),max(origKomi,newKomi));
-    randKomi += 0.75 * sqrt(board.x_size * board.y_size) * nextGaussianTruncated(gameRand,2.5);
-  }
 
   gameData->bName = botSpecB.botName;
   gameData->wName = botSpecW.botName;
@@ -1475,13 +1449,13 @@ FinishedGameData* Play::runGame(
   gameData->playoutDoublingAdvantagePla = otherGameProps.playoutDoublingAdvantagePla;
   gameData->playoutDoublingAdvantage = otherGameProps.playoutDoublingAdvantage;
 
-  gameData->numExtraBlack = extraBlackAndKomi.extraBlack;
-  gameData->handicapForSgf = extraBlackAndKomi.extraBlack; //overwritten later
+  gameData->numExtraBlack = 0;
+  gameData->handicapForSgf = 0; //overwritten later
   gameData->mode = FinishedGameData::MODE_NORMAL;
   gameData->beganInEncorePhase = 0;
   gameData->usedInitialPosition = 0;
 
-  if(extraBlackAndKomi.extraBlack > 0)
+  if(false)
     gameData->mode = FinishedGameData::MODE_HANDICAP;
 
   //Might get overwritten next as we also play sgfposes and such with asym mode!
